@@ -64,11 +64,13 @@ export function parseSigaaText(text: string): Turma[] {
   let currentDisciplina: { codigo: string; nome: string } | null = null;
   
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+    // Sanitiza a linha para evitar problemas com espaços/tabs extras
+    const rawLine = lines[i];
+    const line = rawLine.replace(/\s+/g, ' ').trim();
     
-    // Identifica início de uma disciplina (código - nome) - regex mais flexível
+    // Identifica início de uma disciplina (código - nome) - regex mais tolerante
     // Aceita códigos como: MATA01, GMAT0002, MATB59.1, etc.
-    const disciplinaMatch = line.match(/^([^\s-]+)\s*-\s*(.+)$/);
+    const disciplinaMatch = line.match(/^([^-\s]+)\s*-\s*(.+)$/);
     if (disciplinaMatch) {
       currentDisciplina = {
         codigo: disciplinaMatch[1],
