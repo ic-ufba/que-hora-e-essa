@@ -87,7 +87,7 @@ export function parseSigaaText(text: string): Turma[] {
     // Parseia dados da turma apenas se temos uma disciplina sendo processada
     if (currentDisciplina) {
       // Regex para capturar os dados da turma
-    const turmaMatch = line.match(/^(\d{4}\.\d)\s+(\w+)\s+(.*?)\s+(\d+)\s+(.+?)\s+\((.+?)\)$/);
+    const turmaMatch = line.match(/^(\d{4}\.\d)\s+(\w+)\s+(.*?)\s+(\d*)\s+(.+?)\s+\((.+?)\)$/);
       if (turmaMatch) {
         const periodo = turmaMatch[1];
         let turma = turmaMatch[2];
