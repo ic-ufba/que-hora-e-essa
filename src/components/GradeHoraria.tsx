@@ -299,7 +299,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
 
       {/* Tutorial Modal */}
       <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-2xl w-full mx-auto md:mx-0 p-4 md:p-8 rounded-xl !left-1/2 !-translate-x-1/2">
+        <DialogContent className="max-w-md w-full mx-auto md:mx-0 p-3 md:p-6 rounded-xl !left-1/2 !-translate-x-1/2">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 mb-2">
               <BookOpen className="w-6 h-6" />

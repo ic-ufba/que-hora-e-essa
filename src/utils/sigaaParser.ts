@@ -95,8 +95,11 @@ export function parseSigaaText(text: string): Turma[] {
         let vagas = turmaMatch[4];
         const horariosStr = turmaMatch[5];
         const datas = turmaMatch[6];
-        turma = turma && turma.trim() ? turma : '(Sem informação)';
-        docente = docente && docente.trim() ? docente : '(Sem informação)';
+        turma = turma ? turma.replace(/\s+/g, ' ').trim() : '';
+        docente = docente ? docente.replace(/\s+/g, ' ').trim() : '';
+        vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
+        turma = turma ? turma : '(Sem informação)';
+        docente = docente ? docente : '(Sem informação)';
         vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
         
         // Valida se o horário está no formato correto (deve conter códigos como 24T34, 7M456, etc.)
@@ -125,8 +128,11 @@ export function parseSigaaText(text: string): Turma[] {
           const horariosStr = parts[parts.length - 2];
           const datas = parts[parts.length - 1];
           let docente = parts.slice(2, parts.length - 3).join(' ');
-          turma = turma && turma.trim() ? turma : '(Sem informação)';
-          docente = docente && docente.trim() ? docente : '(Sem informação)';
+          turma = turma ? turma.replace(/\s+/g, ' ').trim() : '';
+          docente = docente ? docente.replace(/\s+/g, ' ').trim() : '';
+          vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
+          turma = turma ? turma : '(Sem informação)';
+          docente = docente ? docente : '(Sem informação)';
           vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
           
           // Valida se o horário está no formato correto
