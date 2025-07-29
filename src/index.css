@@ -1,0 +1,444 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Estilos personalizados para o sistema QueHoraÉEssa? */
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 1fr repeat(6, 1fr);
+  gap: 1px;
+  background: hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: 100%;
+  min-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .calendar-grid {
+    grid-template-columns: 80px repeat(6, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .calendar-grid {
+    grid-template-columns: 120px repeat(6, 1fr);
+  }
+}
+
+.calendar-cell {
+  background: hsl(var(--background));
+  min-height: 2.5rem;
+  padding: 0.25rem;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .calendar-cell {
+    min-height: 3rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .calendar-cell {
+    min-height: 5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+.calendar-cell.compact {
+  min-height: 2rem;
+  padding: 0.125rem;
+  font-size: 0.625rem;
+}
+
+@media (min-width: 640px) {
+  .calendar-cell.compact {
+    min-height: 2.5rem;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .calendar-cell.compact {
+    min-height: 3.75rem;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+.calendar-cell:hover {
+  background: hsl(var(--accent));
+}
+
+.event-block {
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  margin: 0.0625rem 0;
+  font-size: 0.625rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .event-block {
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.375rem;
+    margin: 0.125rem 0;
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .event-block {
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    margin: 0.125rem 0;
+    font-size: 0.75rem;
+  }
+}
+
+.event-block:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid hsl(var(--border));
+}
+
+.nav-item {
+  @apply flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200;
+}
+
+.nav-item:hover {
+  @apply bg-accent;
+}
+
+.nav-item.active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.category-item {
+  @apply flex items-center justify-between p-3 rounded-lg transition-all duration-200;
+}
+
+.category-item:hover {
+  @apply bg-accent;
+}
+
+.priority-item {
+  @apply flex items-center gap-3 p-3 rounded-lg transition-all duration-200 cursor-pointer;
+}
+
+.priority-item:hover {
+  @apply bg-accent;
+}
+
+.time-slot {
+  @apply text-xs text-muted-foreground font-medium;
+}
+
+.day-header {
+  @apply text-xs font-semibold text-center py-1 border-b;
+}
+
+@media (min-width: 640px) {
+  .day-header {
+    @apply text-sm font-semibold text-center py-2 border-b;
+  }
+}
+
+@media (min-width: 768px) {
+  .day-header {
+    @apply text-sm font-semibold text-center py-2 border-b;
+  }
+}
+
+.current-day {
+  @apply bg-primary text-primary-foreground rounded-lg;
+}
+
+/* Responsividade para cards e containers */
+.responsive-container {
+  @apply px-3 py-4;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    @apply px-4 py-6;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    @apply px-6 py-8;
+  }
+}
+
+.responsive-card {
+  @apply p-3;
+}
+
+@media (min-width: 640px) {
+  .responsive-card {
+    @apply p-4;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-card {
+    @apply p-6;
+  }
+}
+
+/* Responsividade para textos */
+.responsive-text-sm {
+  @apply text-xs;
+}
+
+@media (min-width: 640px) {
+  .responsive-text-sm {
+    @apply text-sm;
+  }
+}
+
+.responsive-text-base {
+  @apply text-sm;
+}
+
+@media (min-width: 640px) {
+  .responsive-text-base {
+    @apply text-base;
+  }
+}
+
+.responsive-text-lg {
+  @apply text-base;
+}
+
+@media (min-width: 640px) {
+  .responsive-text-lg {
+    @apply text-lg;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-text-lg {
+    @apply text-xl;
+  }
+}
+
+/* Responsividade para espaçamentos */
+.responsive-gap {
+  @apply gap-3;
+}
+
+@media (min-width: 640px) {
+  .responsive-gap {
+    @apply gap-4;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-gap {
+    @apply gap-6;
+  }
+}
+
+/* Responsividade para a grade horária */
+.calendar-grid.responsive-grade {
+  width: 100%;
+  max-width: 100vw;
+  font-size: 0.85rem;
+}
+@media (max-width: 640px) {
+  .calendar-grid.responsive-grade {
+    font-size: 0.72rem;
+    grid-template-columns: 1fr repeat(6, minmax(0, 1fr));
+    max-width: 100vw;
+  }
+  .calendar-cell, .day-header {
+    padding: 2px 2px;
+    min-width: 0;
+    max-width: 100vw;
+  }
+}
+@media (min-width: 641px) {
+  .calendar-grid.responsive-grade {
+    max-width: 900px;
+    font-size: 0.9rem;
+  }
+  .calendar-cell, .day-header {
+    padding: 4px 4px;
+  }
+}
+
+/* Ajustes para grade mais compacta e responsiva */
+.calendar-grid.responsive-grade {
+  width: 100%;
+  max-width: 100vw;
+  font-size: 0.8rem;
+}
+@media (max-width: 640px) {
+  .calendar-grid.responsive-grade {
+    font-size: 0.65rem;
+    grid-template-columns: 0.7fr repeat(6, 1fr);
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+  .calendar-cell, .day-header {
+    padding: 1px 1px;
+    min-width: 0;
+    max-width: 100vw;
+    min-height: 1.5rem;
+  }
+  .event-block {
+    font-size: 0.6rem;
+    padding: 0.08rem 0.15rem;
+    min-height: 1.1rem;
+    line-height: 1.1;
+  }
+  .event-block .truncate, .event-block .text-xs {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+@media (min-width: 641px) {
+  .calendar-grid.responsive-grade {
+    max-width: 900px;
+    font-size: 0.85rem;
+  }
+  .calendar-cell, .day-header {
+    padding: 2px 2px;
+    min-height: 0.8rem;
+  }
+  .event-block {
+    font-size: 0.7rem;
+    min-height: 1.3rem;
+    line-height: 1.2;
+  }
+}
+@media (min-width: 1024px) {
+  .calendar-grid.responsive-grade {
+    max-width: 900px;
+    font-size: 0.9rem;
+  }
+  .calendar-cell, .day-header {
+    padding: 2px 2px;
+    min-height: 1.1rem;
+  }
+  .event-block {
+    font-size: 0.7rem;
+    min-height: 1.1rem;
+    line-height: 1.1;
+  }
+}
+
+/* Permitir quebra de linha nos nomes das disciplinas na versão detalhada */
+.event-block .truncate, .event-block .text-xs {
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* Import Montserrat font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
