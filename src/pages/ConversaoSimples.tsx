@@ -318,19 +318,19 @@ const ConversaoSimples = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Texto do SIGAA</label>
-                  <Textarea
+                <Textarea
                     placeholder="Cole aqui o texto de uma disciplina do SIGAA..."
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
                     rows={6}
                     className="min-h-[120px]"
-                  />
+                />
                 </div>
 
                 <Button onClick={handleConverter} className="w-full">
                   <Calculator className="w-4 h-4 mr-2" />
                   Converter Disciplina
-                </Button>
+                  </Button>
               </CardContent>
             </Card>
 

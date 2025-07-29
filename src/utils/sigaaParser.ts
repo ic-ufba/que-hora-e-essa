@@ -89,7 +89,15 @@ export function parseSigaaText(text: string): Turma[] {
       // Regex para capturar os dados da turma
     const turmaMatch = line.match(/^(\d{4}\.\d)\s+(\w+)\s+(.*?)\s+(\d+)\s+(.+?)\s+\((.+?)\)$/);
       if (turmaMatch) {
-        const [, periodo, turma, docente, vagas, horariosStr, datas] = turmaMatch;
+        const periodo = turmaMatch[1];
+        let turma = turmaMatch[2];
+        let docente = turmaMatch[3];
+        let vagas = turmaMatch[4];
+        const horariosStr = turmaMatch[5];
+        const datas = turmaMatch[6];
+        turma = turma && turma.trim() ? turma : '(Sem informação)';
+        docente = docente && docente.trim() ? docente : '(Sem informação)';
+        vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
         
         // Valida se o horário está no formato correto (deve conter códigos como 24T34, 7M456, etc.)
         if (horariosStr.match(/\d+[MTN]\d+/)) {
@@ -100,8 +108,8 @@ export function parseSigaaText(text: string): Turma[] {
             nome: currentDisciplina.nome,
             periodo: periodo,
             turma: turma,
-            docente: docente.trim() || '(Sem informação)',
-            vagas: parseInt(vagas) || 0,
+            docente: docente,
+            vagas: vagas,
             horarios: horariosStr || '(Sem informação)',
             dataInicio: dataInicio || '(Sem informação)',
             dataFim: dataFim || '(Sem informação)'
@@ -112,11 +120,14 @@ export function parseSigaaText(text: string): Turma[] {
         const parts = line.split(/\s+/);
         if (parts.length >= 6) {
           const periodo = parts[0];
-          const turma = parts[1];
-          const vagas = parts[parts.length - 3];
+          let turma = parts[1];
+          let vagas = parts[parts.length - 3];
           const horariosStr = parts[parts.length - 2];
           const datas = parts[parts.length - 1];
-          const docente = parts.slice(2, parts.length - 3).join(' ');
+          let docente = parts.slice(2, parts.length - 3).join(' ');
+          turma = turma && turma.trim() ? turma : '(Sem informação)';
+          docente = docente && docente.trim() ? docente : '(Sem informação)';
+          vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
           
           // Valida se o horário está no formato correto
           if (horariosStr.match(/\d+[MTN]\d+/) && datas.includes('(') && datas.includes(')')) {
@@ -126,9 +137,9 @@ export function parseSigaaText(text: string): Turma[] {
               codigo: currentDisciplina.codigo,
               nome: currentDisciplina.nome,
               periodo: periodo || '(Sem informação)',
-              turma: turma || '(Sem informação)',
-              docente: docente.trim() || '(Sem informação)',
-              vagas: parseInt(vagas) || 0,
+              turma: turma,
+              docente: docente,
+              vagas: vagas,
               horarios: horariosStr || '(Sem informação)',
               dataInicio: dataInicio || '(Sem informação)',
               dataFim: dataFim || '(Sem informação)'

@@ -128,7 +128,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
             key={disciplina.codigo}
             className={`event-block ${getEventColor(disciplina, isConflicted)} cursor-pointer mb-1`}
             onClick={() => setSelectedDisciplina(disciplina)}
-          >
+      >
             <div className="font-semibold text-xs truncate text-center">{disciplina.codigo}</div>
             {showDetailed && !compact && (
               <div className="text-[10px] md:text-xs opacity-90 truncate text-center">{disciplina.nome}</div>
@@ -199,7 +199,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
             <div key={dia} className="day-header">
               <div className="responsive-text-sm font-semibold">{dia}</div>
             </div>
-          ))}
+              ))}
           
           {/* Time slots - cada linha é um horário */}
           {HORARIOS_GRADE.map((horario) => (
@@ -271,8 +271,8 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
                 <div className="flex items-center gap-2 mb-1 md:mb-2">
                   <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <span className="text-muted-foreground">Vagas:</span>
-                  <span className="font-medium">{selectedDisciplina.vagas}</span>
-              </div>
+                  <span className="font-medium">{selectedDisciplina.vagas === 0 ? 'Sem informação' : selectedDisciplina.vagas}</span>
+                </div>
                 <div className="flex items-center gap-2 mb-1 md:mb-2">
                   <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <span className="text-muted-foreground">Período:</span>

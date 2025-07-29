@@ -108,7 +108,7 @@ const PlanejadorSemestral = () => {
 
     // Verifica se a disciplina já existe na grade (apenas se o código for exatamente igual)
     const disciplinaJaExiste = gradeAtual.find((d) => d.codigo === turma.codigo);
-
+    
     if (disciplinaJaExiste) {
       toast({
         title: "Disciplina já existe na grade",
@@ -394,7 +394,7 @@ const PlanejadorSemestral = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                       <div className="flex gap-2 flex-wrap">
                         <Badge variant="secondary" className="text-xs md:text-sm px-3 py-1">Turma {turma.turma}</Badge>
-                        <Badge variant="outline" className="text-xs md:text-sm px-3 py-1">{turma.vagas} vagas</Badge>
+                        <Badge variant="outline" className="text-xs md:text-sm px-3 py-1">{turma.vagas === 0 ? 'Sem informação' : turma.vagas + ' vagas'}</Badge>
                                       </div>
                                       <Button
                                         size="sm"
@@ -403,7 +403,7 @@ const PlanejadorSemestral = () => {
                           handleAdicionarTurma(turma);
                           setSelectedTurma(null);
                         }}
-                      >
+                                      >
                         <Plus className="w-4 h-4 mr-1" />
                         Adicionar
                                       </Button>
