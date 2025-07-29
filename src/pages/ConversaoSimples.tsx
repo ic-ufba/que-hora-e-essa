@@ -489,7 +489,7 @@ const ConversaoSimples = () => {
 
       {/* Tutorial Modal */}
       <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-xs w-full mx-auto md:mx-0 p-3 md:p-4 rounded-xl !left-1/2 !-translate-x-1/2">
+        <DialogContent className="max-w-3xl w-full mx-auto md:mx-0 p-3 md:p-6 max-h-[80vh] overflow-y-auto rounded-xl !left-1/2 !-translate-x-1/2">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 mb-2">
               <BookOpen className="w-6 h-6" />
@@ -504,8 +504,8 @@ const ConversaoSimples = () => {
               <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">1</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
                       <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
                         https://sigaa.ufba.br/sigaa/public/home.jsf
@@ -514,50 +514,50 @@ const ConversaoSimples = () => {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">2</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">3</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">4</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">5</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">6</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">7</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">7</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">8</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">8</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">9</div>
-                    <div>
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">9</div>
+                    <div className="ml-2">
                       <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                     </div>
                   </div>

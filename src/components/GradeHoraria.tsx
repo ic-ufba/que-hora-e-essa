@@ -223,7 +223,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
 
       {/* Disciplina Details Dialog */}
       <Dialog open={!!selectedDisciplina} onOpenChange={() => setSelectedDisciplina(null)}>
-        <DialogContent className="max-w-sm w-full mx-auto md:mx-0 p-4 md:p-8 rounded-xl !left-1/2 !-translate-x-1/2">
+        <DialogContent className="max-w-2xl w-full mx-auto md:mx-0 p-4 md:p-10 rounded-xl !left-1/2 !-translate-x-1/2">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 mb-2">
               <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
@@ -299,7 +299,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
 
       {/* Tutorial Modal */}
       <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-2xl w-full mx-auto md:mx-0 p-6 md:p-10 rounded-xl !left-1/2 !-translate-x-1/2">
+        <DialogContent className="max-w-3xl w-full mx-auto md:mx-0 p-3 md:p-6 max-h-[80vh] overflow-y-auto rounded-xl !left-1/2 !-translate-x-1/2">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 mb-2">
               <BookOpen className="w-6 h-6" />
@@ -310,78 +310,77 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
-                      <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
-                        https://sigaa.ufba.br/sigaa/public/home.jsf
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+            <div className="space-y-4">
+              <h3 className="font-semibold text-sm md:text-base">Passos para acessar os dados:</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
+                    <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
+                      https://sigaa.ufba.br/sigaa/public/home.jsf
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">7</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">7</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">8</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">8</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">9</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">9</div>
+                  <div>
+                    <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                   </div>
                 </div>
               </div>
-              {/* Exemplo de Dados */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm md:text-base">Exemplo de dados copiados:</h3>
-                <div className="bg-gray-50 p-3 md:p-4 rounded-lg border">
-                  <div className="text-xs md:text-sm font-mono space-y-1">
-                    <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
-                    <div>Período/ Ano\tTurma\tDocente\tVgs Reservadas\tHorários</div>
-                    <div>2025.2\t03\tJAIME LEONARDO ORJUELA CHAMORRO\t5\t24T34 (01/09/2025 - 10/01/2026)</div>
-                  </div>
+            </div>
+            {/* Exemplo de Dados */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-sm md:text-base">Exemplo de dados copiados:</h3>
+              <div className="bg-gray-50 p-3 md:p-4 rounded-lg border">
+                <div className="text-xs md:text-sm font-mono space-y-1">
+                  <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
+                  <div>Período/ Ano\tTurma\tDocente\tVgs Reservadas\tHorários</div>
+                  <div>2025.2\t03\tJAIME LEONARDO ORJUELA CHAMORRO\t5\t24T34 (01/09/2025 - 10/01/2026)</div>
                 </div>
               </div>
             </div>
