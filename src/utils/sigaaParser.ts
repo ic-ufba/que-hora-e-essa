@@ -120,36 +120,69 @@ export function parseSigaaText(text: string): Turma[] {
         }
       } else {
         // Fallback: tentar parsing manual se o regex não funcionar
-        const parts = line.split(/\s+/);
-        if (parts.length >= 6) {
-          const periodo = parts[0];
-          let turma = parts[1];
-          let vagas = parts[parts.length - 3];
-          const horariosStr = parts[parts.length - 2];
-          const datas = parts[parts.length - 1];
-          let docente = parts.slice(2, parts.length - 3).join(' ');
-          turma = turma ? turma.replace(/\s+/g, ' ').trim() : '';
-          docente = docente ? docente.replace(/\s+/g, ' ').trim() : '';
-          vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
-          turma = turma ? turma : '(Sem informação)';
-          docente = docente ? docente : '(Sem informação)';
-          vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
-          
-          // Valida se o horário está no formato correto
-          if (horariosStr.match(/\d+[MTN]\d+/) && datas.includes('(') && datas.includes(')')) {
-            const [dataInicio, dataFim] = datas.replace(/[()]/g, '').split(' - ');
-            
+        // 1. Tenta split por tabulação (SIGAA padrão)
+        const tabParts = rawLine.split('\t');
+        if (tabParts.length >= 5) {
+          const periodo = tabParts[0].trim();
+          const turma = tabParts[1].trim() || '(Sem informação)';
+          const docente = tabParts[2].trim() || '(Sem informação)';
+          const vagas = tabParts[3].trim() ? parseInt(tabParts[3].trim()) : 0;
+          const horariosRaw = tabParts[4].trim();
+          let horarios = '(Sem informação)';
+          let dataInicio = '(Sem informação)';
+          let dataFim = '(Sem informação)';
+          const horariosMatch = horariosRaw.match(/^(.+?)\s*\((.+?)\)$/);
+          if (horariosMatch) {
+            horarios = horariosMatch[1];
+            const datasSplit = horariosMatch[2].split(' - ');
+            dataInicio = datasSplit[0] || '(Sem informação)';
+            dataFim = datasSplit[1] || '(Sem informação)';
+          }
+          // Só adiciona se tiver código, nome e horário
+          if (currentDisciplina && horarios && horarios.match(/\d+[MTN]\d+/)) {
             turmas.push({
               codigo: currentDisciplina.codigo,
               nome: currentDisciplina.nome,
               periodo: periodo || '(Sem informação)',
-              turma: turma,
-              docente: docente,
-              vagas: vagas,
-              horarios: horariosStr || '(Sem informação)',
-              dataInicio: dataInicio || '(Sem informação)',
-              dataFim: dataFim || '(Sem informação)'
+              turma,
+              docente,
+              vagas,
+              horarios,
+              dataInicio,
+              dataFim
             });
+          }
+        } else {
+          // Fallback antigo (split por espaço)
+          const parts = line.split(/\s+/);
+          if (parts.length >= 6) {
+            const periodo = parts[0];
+            let turma = parts[1];
+            let vagas = parts[parts.length - 3];
+            const horariosStr = parts[parts.length - 2];
+            const datas = parts[parts.length - 1];
+            let docente = parts.slice(2, parts.length - 3).join(' ');
+            turma = turma ? turma.replace(/\s+/g, ' ').trim() : '';
+            docente = docente ? docente.replace(/\s+/g, ' ').trim() : '';
+            vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
+            turma = turma ? turma : '(Sem informação)';
+            docente = docente ? docente : '(Sem informação)';
+            vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
+            // Valida se o horário está no formato correto
+            if (horariosStr.match(/\d+[MTN]\d+/) && datas.includes('(') && datas.includes(')')) {
+              const [dataInicio, dataFim] = datas.replace(/[()]/g, '').split(' - ');
+              turmas.push({
+                codigo: currentDisciplina.codigo,
+                nome: currentDisciplina.nome,
+                periodo: periodo || '(Sem informação)',
+                turma: turma,
+                docente: docente,
+                vagas: vagas,
+                horarios: horariosStr || '(Sem informação)',
+                dataInicio: dataInicio || '(Sem informação)',
+                dataFim: dataFim || '(Sem informação)'
+              });
+            }
           }
         }
       }
