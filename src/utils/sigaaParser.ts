@@ -151,7 +151,7 @@ export function parseSigaaText(text: string): Turma[] {
               dataInicio,
               dataFim
             });
-          }
+    }
         } else {
           // Fallback antigo (split por espaço)
           const parts = line.split(/\s+/);

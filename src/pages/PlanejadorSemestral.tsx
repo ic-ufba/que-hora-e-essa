@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Filter } from "lucide-react";
 import { 
   Calendar, 
   Plus, 
@@ -28,6 +29,36 @@ const PlanejadorSemestral = () => {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  // 1. Adicione estados para filtro
+  const [filtroModalOpen, setFiltroModalOpen] = useState(false);
+  const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
+  const [horariosSelecionados, setHorariosSelecionados] = useState<string[]>([]);
+  const [logicaFiltroDia, setLogicaFiltroDia] = useState<'OU' | 'E'>('OU');
+  const [logicaFiltroHorario, setLogicaFiltroHorario] = useState<'OU' | 'E'>('OU');
+
+  const diasSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+  const mapSiglaParaNome = {
+    SEG: "Segunda",
+    TER: "Terça",
+    QUA: "Quarta",
+    QUI: "Quinta",
+    SEX: "Sexta",
+    SAB: "Sábado"
+  };
+  const horariosGrade = [
+    "07:00", "07:55", "08:50", "09:45", "10:40", "11:35", "13:00", "13:55", "14:50", "15:45", "16:40", "17:35", "18:30", "19:25", "20:20", "21:15"
+  ];
+
+  const limparFiltro = () => {
+    setDiasSelecionados([]);
+    setHorariosSelecionados([]);
+    setLogicaFiltroDia('OU');
+    setLogicaFiltroHorario('OU');
+  };
+
+  const aplicarFiltro = () => {
+    setFiltroModalOpen(false);
+  };
 
   // Carrega a grade do localStorage ao inicializar
   useEffect(() => {
@@ -300,44 +331,197 @@ const PlanejadorSemestral = () => {
                     </Button>
                   </div>
                   {/* Campo de busca */}
-                  <div className="mb-4">
+                  <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-3 gap-2">
                     <input
                       type="text"
                       placeholder="Buscar disciplina..."
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300"
+                      className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300 md:w-auto"
+                      style={{ minWidth: 0 }}
                     />
-                </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                    {Object.values(turmasPorDisciplina)
-                      .filter(disciplina =>
-                        disciplina.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        disciplina.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((disciplina) => (
-                        <div 
-                          key={disciplina.codigo}
-                          className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => setSelectedTurma(disciplina.turmas[0])}
-                        >
-                          <div className="font-semibold text-xs md:text-sm mb-1">{disciplina.codigo}</div>
-                          <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {disciplina.nome}
-                          </div>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 border rounded px-3 py-2 text-sm bg-muted hover:bg-muted/70 transition"
+                      onClick={() => setFiltroModalOpen(true)}
+                    >
+                      <Filter className="w-4 h-4" />
+                      Filtrar
+                    </button>
+                  </div>
+
+                  {/* Modal de filtro customizado */}
+                  {filtroModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setFiltroModalOpen(false)}>
+                      <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[85vh] overflow-y-auto md:max-w-lg md:p-6" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {disciplina.turmas.length} turma(s)
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {disciplina.turmas.reduce((total, t) => total + t.vagas, 0)} vagas
-                            </Badge>
+                            <Filter className="w-5 h-5" />
+                            <h3 className="text-lg font-bold">Filtro de matérias</h3>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => setFiltroModalOpen(false)}>
+                            ✕
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <div className="font-semibold mb-2 text-sm">Dias da semana:</div>
+                            <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
+                              {diasSemana.map(dia => (
+                                <label key={dia} className="flex items-center gap-2 p-2 border rounded">
+                                  <input
+                                    type="checkbox"
+                                    checked={diasSelecionados.includes(dia)}
+                                    onChange={e => {
+                                      if (e.target.checked) setDiasSelecionados([...diasSelecionados, dia]);
+                                      else setDiasSelecionados(diasSelecionados.filter(d => d !== dia));
+                                    }}
+                                    className="accent-blue-600"
+                                  />
+                                  <span className="text-sm">{dia}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <div className="font-semibold mt-3 mb-2 text-sm">Lógica para dias:</div>
+                            <div className="space-y-2 md:flex md:gap-4">
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  checked={logicaFiltroDia === 'OU'}
+                                  onChange={() => setLogicaFiltroDia('OU')}
+                                  className="accent-blue-600"
+                                />
+                                <span className="text-sm">OU (um dia ou outro)</span>
+                              </label>
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  checked={logicaFiltroDia === 'E'}
+                                  onChange={() => setLogicaFiltroDia('E')}
+                                  className="accent-blue-600"
+                                />
+                                <span className="text-sm">E (um dia e outro)</span>
+                              </label>
+                            </div>
+                </div>
+                
+                          <div>
+                            <div className="font-semibold mb-2 text-sm">Horários:</div>
+                            <div className="grid grid-cols-4 md:flex md:flex-wrap gap-1 md:gap-2 max-h-32 overflow-y-auto">
+                              {horariosGrade.map(horario => (
+                                <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm">
+                                  <input
+                                    type="checkbox"
+                                    checked={horariosSelecionados.includes(horario)}
+                                    onChange={e => {
+                                      if (e.target.checked) setHorariosSelecionados([...horariosSelecionados, horario]);
+                                      else setHorariosSelecionados(horariosSelecionados.filter(h => h !== horario));
+                                    }}
+                                    className="accent-blue-600"
+                                  />
+                                  <span>{horario}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <div className="font-semibold mt-3 mb-2 text-sm">Lógica para horários:</div>
+                            <div className="space-y-2 md:flex md:gap-4">
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  checked={logicaFiltroHorario === 'OU'}
+                                  onChange={() => setLogicaFiltroHorario('OU')}
+                                  className="accent-blue-600"
+                                />
+                                <span className="text-sm">OU (um horário ou outro)</span>
+                              </label>
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  checked={logicaFiltroHorario === 'E'}
+                                  onChange={() => setLogicaFiltroHorario('E')}
+                                  className="accent-blue-600"
+                                />
+                                <span className="text-sm">E (um horário e outro)</span>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2 pt-2 border-t">
+                            <button
+                              type="button"
+                              className="flex-1 px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm"
+                              onClick={limparFiltro}
+                            >
+                              Limpar
+                            </button>
+                            <button
+                              type="button"
+                              className="flex-1 px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                              onClick={aplicarFiltro}
+                            >
+                              Aplicar
+                            </button>
                           </div>
                         </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                    </div>
+                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  {Object.values(turmasPorDisciplina)
+                    .filter(disciplina =>
+                      (disciplina.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       disciplina.codigo.toLowerCase().includes(searchTerm.toLowerCase())) &&
+                      (
+                        // Se não há filtro, mostra tudo
+                        (diasSelecionados.length === 0 && horariosSelecionados.length === 0) ||
+                        disciplina.turmas.some(turma => {
+                          const horarios = parseHorarios(turma.horarios);
+                          // Lógica para dias
+                          let diasOk = true;
+                          if (diasSelecionados.length > 0) {
+                            if (logicaFiltroDia === 'OU') {
+                              diasOk = horarios.some(h => diasSelecionados.includes(Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia)));
+                            } else {
+                              diasOk = diasSelecionados.every(diaSel => horarios.some(h => h.dia === mapSiglaParaNome[diaSel]));
+                            }
+                          }
+                          // Lógica para horários
+                          let horariosOk = true;
+                          if (horariosSelecionados.length > 0) {
+                            if (logicaFiltroHorario === 'OU') {
+                              horariosOk = horarios.some(h => horariosSelecionados.includes(h.horarioInicio));
+                            } else {
+                              horariosOk = horariosSelecionados.every(hSel => horarios.some(h => h.horarioInicio === hSel));
+                            }
+                          }
+                          return diasOk && horariosOk;
+                        })
+                      )
+                    )
+                    .map((disciplina) => (
+                      <div 
+                        key={disciplina.codigo}
+                        className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setSelectedTurma(disciplina.turmas[0])}
+                      >
+                        <div className="font-semibold text-xs md:text-sm mb-1">{disciplina.codigo}</div>
+                        <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                          {disciplina.nome}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                            {disciplina.turmas.length} turma(s)
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {disciplina.turmas.reduce((total, t) => total + t.vagas, 0)} vagas
+                            </Badge>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
             )}
                           </div>
                           
@@ -367,7 +551,8 @@ const PlanejadorSemestral = () => {
               <GradeHoraria
                 disciplinas={gradeAtual}
                 onRemoverDisciplina={handleRemoverDisciplina}
-                compact={true}
+                compact={false}
+                showNames={false}
               />
             )}
                                         </div>
@@ -375,8 +560,8 @@ const PlanejadorSemestral = () => {
 
         {/* Dialog de Detalhes da Turma */}
         {selectedTurma && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedTurma(null)}>
+            <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-bold">{selectedTurma.codigo}</h3>
@@ -386,7 +571,7 @@ const PlanejadorSemestral = () => {
                   ✕
                 </Button>
               </div>
-                          
+              
               <div className="space-y-6">
                 {/* Lista todas as turmas da disciplina */}
                 {turmasPorDisciplina[selectedTurma.codigo]?.turmas.map((turma, index) => (
@@ -403,7 +588,7 @@ const PlanejadorSemestral = () => {
                           handleAdicionarTurma(turma);
                           setSelectedTurma(null);
                         }}
-                                      >
+                      >
                         <Plus className="w-4 h-4 mr-1" />
                         Adicionar
                                       </Button>
@@ -446,97 +631,100 @@ const PlanejadorSemestral = () => {
             )}
           </div>
 
-      {/* Tutorial Modal */}
-      <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-3xl w-full mx-auto md:mx-0 p-3 md:p-6 max-h-[80vh] overflow-y-auto rounded-xl !left-1/2 !-translate-x-1/2">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6" />
-              <span className="text-lg font-bold">Como coletar os dados no SIGAA?</span>
-            </DialogTitle>
-            <DialogDescription className="mb-4">
-              Siga estes passos para extrair os dados corretamente do sistema da UFBA
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
-                      <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
-                        https://sigaa.ufba.br/sigaa/public/home.jsf
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">7</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">8</div>
-                    <div>
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">9</div>
+      {/* Modal de tutorial customizado */}
+      {showTutorialModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTutorialModal(false)}>
+          <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto md:max-w-3xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Como coletar dados no SIGAA</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowTutorialModal(false)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Siga estes passos para extrair os dados corretamente do sistema da UFBA
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
                   <div>
-                      <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
-                    </div>
+                    <p className="font-medium text-sm">Acesse o SIGAA</p>
+                    <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                      sigaa.ufba.br
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-medium text-sm">No menu lateral, clique em <strong>Graduação</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Cursos</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+                  <div>
+                    <p className="font-medium text-sm">Pesquise pelo nome ou modalidade do curso</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">5</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Visualizar Página do Curso</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">6</div>
+                  <div>
+                    <p className="font-medium text-sm">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">7</div>
+                  <div>
+                    <p className="font-medium text-sm">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">8</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Buscar</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">9</div>
+                  <div>
+                    <p className="font-medium text-sm">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                   </div>
                 </div>
               </div>
-              {/* Exemplo de Dados */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm md:text-base">Exemplo de dados copiados:</h3>
-                <div className="bg-gray-50 p-3 md:p-4 rounded-lg border">
-                  <div className="text-xs md:text-sm font-mono space-y-1">
+              
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-semibold text-sm">Exemplo de dados copiados:</h4>
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                  <div className="text-xs font-mono space-y-1">
                     <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
                     <div>Período/ Ano	Turma	Docente	Vgs Reservadas	Horários</div>
                     <div>2025.2	03	JAIME LEONARDO ORJUELA CHAMORRO	5	24T34 (01/09/2025 - 10/01/2026)</div>
                   </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      )}
     </div>
   );
 };

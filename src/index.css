@@ -348,36 +348,8 @@ All colors MUST be HSL.
 /* Responsividade para a grade horária */
 .calendar-grid.responsive-grade {
   width: 100%;
-  max-width: 100vw;
+  max-width: 900px;
   font-size: 0.85rem;
-}
-@media (max-width: 640px) {
-  .calendar-grid.responsive-grade {
-    font-size: 0.72rem;
-    grid-template-columns: 1fr repeat(6, minmax(0, 1fr));
-    max-width: 100vw;
-  }
-  .calendar-cell, .day-header {
-    padding: 2px 2px;
-    min-width: 0;
-    max-width: 100vw;
-  }
-}
-@media (min-width: 641px) {
-  .calendar-grid.responsive-grade {
-    max-width: 900px;
-    font-size: 0.9rem;
-  }
-  .calendar-cell, .day-header {
-    padding: 4px 4px;
-  }
-}
-
-/* Ajustes para grade mais compacta e responsiva */
-.calendar-grid.responsive-grade {
-  width: 100%;
-  max-width: 100vw;
-  font-size: 0.8rem;
 }
 @media (max-width: 640px) {
   .calendar-grid.responsive-grade {
@@ -398,24 +370,20 @@ All colors MUST be HSL.
     min-height: 1.1rem;
     line-height: 1.1;
   }
-  .event-block .truncate, .event-block .text-xs {
-    white-space: normal;
-    word-break: break-word;
-  }
 }
 @media (min-width: 641px) {
   .calendar-grid.responsive-grade {
     max-width: 900px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
   .calendar-cell, .day-header {
     padding: 2px 2px;
-    min-height: 0.8rem;
+    min-height: 1.1rem;
   }
   .event-block {
     font-size: 0.7rem;
-    min-height: 1.3rem;
-    line-height: 1.2;
+    min-height: 1.1rem;
+    line-height: 1.1;
   }
 }
 @media (min-width: 1024px) {

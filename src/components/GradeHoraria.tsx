@@ -14,6 +14,7 @@ interface GradeHorariaProps {
   disciplinas: Disciplina[];
   onRemoverDisciplina?: (codigo: string) => void;
   compact?: boolean;
+  showNames?: boolean;
 }
 
 // Definição dos horários específicos da grade (baseado na tabela UFBA)
@@ -30,11 +31,11 @@ const HORARIO_PARA_BLOCO: { [key: string]: string } = {
   '18:30': 'N1', '19:25': 'N2', '20:20': 'N3', '21:15': 'N4'
 };
 
-export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false }: GradeHorariaProps) => {
+export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false, showNames = true }: GradeHorariaProps) => {
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
   const [selectedConflictCell, setSelectedConflictCell] = useState<string | null>(null);
   const [conflictsOpen, setConflictsOpen] = useState(false);
-  const [showDetailed, setShowDetailed] = useState(!compact);
+  const [showDetailed, setShowDetailed] = useState(compact ? false : !compact);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   
   const conflicts = detectConflicts(disciplinas);
@@ -130,7 +131,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
             onClick={() => setSelectedDisciplina(disciplina)}
       >
             <div className="font-semibold text-xs truncate text-center">{disciplina.codigo}</div>
-            {showDetailed && !compact && (
+            {showDetailed && showNames && (
               <div className="text-[10px] md:text-xs opacity-90 truncate text-center">{disciplina.nome}</div>
             )}
           </div>
@@ -181,7 +182,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
       {/* Grade Horária */}
       <div className="w-full">
         {/* Botão de alternância de visualização - só na tela de grade */}
-        {!compact && (
+        {!compact && showNames && (
           <div className="flex items-center justify-end mb-2 gap-2">
             <span className="text-xs font-medium text-muted-foreground">Simples</span>
             <Switch checked={showDetailed} onCheckedChange={setShowDetailed} />
@@ -192,8 +193,8 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
           {/* Headers */}
           {/* 1. Inverter posição de Horário e Período no cabeçalho */}
           <div className="day-header bg-muted/50">
-            <div className="responsive-text-sm font-semibold">Período</div>
-            <div className="text-xs text-muted-foreground">Horário</div>
+            <div className="responsive-text-sm font-semibold md:block hidden">Período</div>
+            <div className="text-xs text-muted-foreground md:block hidden">Horário</div>
           </div>
           {DIAS_SEMANA.map((dia) => (
             <div key={dia} className="day-header">
@@ -221,172 +222,89 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
                     </div>
       </div>
 
-      {/* Disciplina Details Dialog */}
-      <Dialog open={!!selectedDisciplina} onOpenChange={() => setSelectedDisciplina(null)}>
-        <DialogContent className="max-w-2xl w-full mx-auto md:mx-0 p-4 md:p-10 rounded-xl !left-1/2 !-translate-x-1/2">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-base md:text-lg font-bold">Detalhes da Disciplina</span>
-            </DialogTitle>
-            <DialogDescription className="mb-3 md:mb-4 text-xs md:text-sm">
-              Informações completas sobre a disciplina selecionada
-            </DialogDescription>
-          </DialogHeader>
-          {selectedDisciplina && (
-            <div className="space-y-4 md:space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <Badge variant="secondary" className={`text-sm md:text-base px-2 md:px-3 py-1 ${getEventColor(selectedDisciplina)}`}>{selectedDisciplina.codigo}</Badge>
-                  <span className="font-semibold text-base md:text-lg">{selectedDisciplina.nome}</span>
+      {/* Disciplina Details Dialog - Removido para evitar conflitos */}
+      
+      {/* Modal de detalhes da disciplina customizado */}
+      {selectedDisciplina && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDisciplina(null)}>
+          <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Detalhes da Disciplina</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedDisciplina(null)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className={`text-sm px-3 py-1 ${getEventColor(selectedDisciplina)}`}>
+                  {selectedDisciplina.codigo}
+                </Badge>
+                <span className="font-semibold text-base">{selectedDisciplina.nome}</span>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground text-sm">Professor:</span>
+                  <span className="font-medium text-sm">{selectedDisciplina.professor}</span>
                 </div>
-                <div className="flex gap-2">
-                  {onRemoverDisciplina && (
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={() => {
-                        onRemoverDisciplina(selectedDisciplina.codigo);
-                        setSelectedDisciplina(null);
-                      }}
-                      className="flex-1 text-xs md:text-sm"
-                    >
-                      <Trash2 className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
-                      Remover
-                    </Button>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground text-sm">Turma:</span>
+                  <span className="font-medium text-sm">{selectedDisciplina.turma}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground text-sm">Vagas:</span>
+                  <span className="font-medium text-sm">{selectedDisciplina.vagas === 0 ? 'Sem informação' : selectedDisciplina.vagas}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground text-sm">Período:</span>
+                  <span className="font-medium text-sm">{selectedDisciplina.periodo}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
-                <div className="flex items-center gap-2 mb-1 md:mb-2">
-                  <User className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Professor:</span>
-                  <span className="font-medium">{selectedDisciplina.professor}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-1 md:mb-2">
-                  <Clock className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Turma:</span>
-                  <span className="font-medium">{selectedDisciplina.turma}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-1 md:mb-2">
-                  <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Vagas:</span>
-                  <span className="font-medium">{selectedDisciplina.vagas === 0 ? 'Sem informação' : selectedDisciplina.vagas}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-1 md:mb-2">
-                  <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Período:</span>
-                  <span className="font-medium">{selectedDisciplina.periodo}</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-xs md:text-sm mb-1">Horários:</h4>
-                <div className="space-y-1">
+              
+              <div className="space-y-2 pt-2 border-t">
+                <h4 className="font-semibold text-sm">Horários:</h4>
+                <div className="space-y-2">
                   {selectedDisciplina.horarios.map((horario, index) => (
-                    <div key={index} className="flex items-center justify-between p-1.5 md:p-2 bg-muted/50 rounded text-xs md:text-sm">
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
                       <span>{horario.dia}</span>
                       <Badge variant="outline" className="text-xs">
                         {horario.bloco} ({horario.horarioInicio} - {horario.horarioFim})
-                    </Badge>
+                      </Badge>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Tutorial Modal */}
-      <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-3xl w-full mx-auto md:mx-0 p-3 md:p-6 max-h-[80vh] overflow-y-auto rounded-xl !left-1/2 !-translate-x-1/2">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6" />
-              <span className="text-lg font-bold">Como coletar os dados no SIGAA?</span>
-            </DialogTitle>
-            <DialogDescription className="mb-4">
-              Siga estes passos para extrair os dados corretamente do sistema da UFBA
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="font-semibold text-sm md:text-base">Passos para acessar os dados:</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
-                    <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
-                      https://sigaa.ufba.br/sigaa/public/home.jsf
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+              
+              {onRemoverDisciplina && (
+                <div className="pt-2 border-t">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => {
+                      onRemoverDisciplina(selectedDisciplina.codigo);
+                      setSelectedDisciplina(null);
+                    }}
+                    className="w-full text-sm"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remover Disciplina
+                  </Button>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">7</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">8</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">9</div>
-                  <div>
-                    <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Exemplo de Dados */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-sm md:text-base">Exemplo de dados copiados:</h3>
-              <div className="bg-gray-50 p-3 md:p-4 rounded-lg border">
-                <div className="text-xs md:text-sm font-mono space-y-1">
-                  <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
-                  <div>Período/ Ano\tTurma\tDocente\tVgs Reservadas\tHorários</div>
-                  <div>2025.2\t03\tJAIME LEONARDO ORJUELA CHAMORRO\t5\t24T34 (01/09/2025 - 10/01/2026)</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
+      {/* Tutorial Modal - Removido para evitar conflitos */}
     </div>
   );
 };

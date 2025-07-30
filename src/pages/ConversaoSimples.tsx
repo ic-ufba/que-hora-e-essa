@@ -481,93 +481,97 @@ const ConversaoSimples = () => {
             <GradeHoraria
               disciplinas={gradeAtual}
               onRemoverDisciplina={handleRemoverDisciplina}
-              compact={true}
+              compact={false}
+              showNames={false}
             />
           )}
         </div>
       </div>
 
-      {/* Tutorial Modal */}
-      <Dialog open={showTutorialModal} onOpenChange={setShowTutorialModal}>
-        <DialogContent className="max-w-3xl w-full mx-auto md:mx-0 p-3 md:p-6 max-h-[80vh] overflow-y-auto rounded-xl !left-1/2 !-translate-x-1/2">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6" />
-              <span className="text-lg font-bold">Como coletar os dados no SIGAA?</span>
-            </DialogTitle>
-            <DialogDescription className="mb-4">
-              Siga estes passos para extrair os dados corretamente do sistema da UFBA
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">1</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Acesse o SIGAA</p>
-                      <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-primary hover:underline flex items-center gap-1">
-                        https://sigaa.ufba.br/sigaa/public/home.jsf
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+      {/* Modal de tutorial customizado */}
+      {showTutorialModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTutorialModal(false)}>
+          <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto md:max-w-3xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Como coletar dados no SIGAA</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowTutorialModal(false)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Siga estes passos para extrair os dados corretamente do sistema da UFBA
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                  <div>
+                    <p className="font-medium text-sm">Acesse o SIGAA</p>
+                    <a href="https://sigaa.ufba.br/sigaa/public/home.jsf" target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                      sigaa.ufba.br
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">2</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">No menu lateral, clique em <strong>Graduação</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-medium text-sm">No menu lateral, clique em <strong>Graduação</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">3</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Cursos</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Cursos</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">4</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Pesquise pelo nome ou modalidade do curso</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+                  <div>
+                    <p className="font-medium text-sm">Pesquise pelo nome ou modalidade do curso</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">5</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Visualizar Página do Curso</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">5</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Visualizar Página do Curso</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">6</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">6</div>
+                  <div>
+                    <p className="font-medium text-sm">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">7</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">7</div>
+                  <div>
+                    <p className="font-medium text-sm">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">8</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Clique em <strong>Buscar</strong></p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">8</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Buscar</strong></p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-bold">9</div>
-                    <div className="ml-2">
-                      <p className="font-medium text-sm md:text-base">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">9</div>
+                  <div>
+                    <p className="font-medium text-sm">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                   </div>
                 </div>
               </div>
-              {/* Exemplo de Dados */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm md:text-base">Exemplo de dados copiados:</h3>
-                <div className="bg-gray-50 p-3 md:p-4 rounded-lg border">
-                  <div className="text-xs md:text-sm font-mono space-y-1">
+              
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-semibold text-sm">Exemplo de dados copiados:</h4>
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                  <div className="text-xs font-mono space-y-1">
                     <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
                     <div>Período/ Ano	Turma	Docente	Vgs Reservadas	Horários</div>
                     <div>2025.2	03	JAIME LEONARDO ORJUELA CHAMORRO	5	24T34 (01/09/2025 - 10/01/2026)</div>
@@ -576,8 +580,8 @@ const ConversaoSimples = () => {
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 };
