@@ -6,7 +6,9 @@ Sistema web moderno para conversão automática dos códigos de horários do SIG
 
 O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar códigos como `46N12` ou `25M45` em horários reais, permitindo o planejamento do semestre, detecção de conflitos e visualização interativa da grade.
 
-- **Criadora: [Eduarda Almeida](https://www.linkedin.com/in/eduarda-s-almeida)**
+## Criação e Desenvolvimento
+- **Criadora e desenvolvedora: Eduarda Almeida
+  - [Linkedin](https://www.linkedin.com/in/eduarda-s-almeida)**
 - **Iniciativa: IdeaLab.ic**
 
 ---
