@@ -44,10 +44,8 @@ const PlanejadorSemestral = () => {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [historico, setHistorico] = useState<string[]>([]);
   const [historicoDisciplinas, setHistoricoDisciplinas] = useState<Disciplina[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
   const [showFormatoEsperado, setShowFormatoEsperado] = useState(false);
   const [showInstrucoes, setShowInstrucoes] = useState(false);
-  const [showConversaoCompleta, setShowConversaoCompleta] = useState(true);
   const [showInputSection, setShowInputSection] = useState(true);
   
   // Estados para histórico de cursos consultados
@@ -57,19 +55,6 @@ const PlanejadorSemestral = () => {
   // Estados para histórico de grades salvas
   const [historicoGrades, setHistoricoGrades] = useState<{ [key: string]: Disciplina[] }>({});
   const [showHistoricoGrades, setShowHistoricoGrades] = useState(false);
-  const [nomeGradeAtual, setNomeGradeAtual] = useState("");
-
-  // Detecta se é mobile
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const diasSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
   const mapSiglaParaNome = {
