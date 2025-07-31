@@ -375,8 +375,8 @@ const PlanejadorSemestral = () => {
         temDisciplina = true;
       }
       
-      // Verifica se tem horário (formato 24T34 ou similar)
-      if (trimmedLine.match(/\d{2}[MTN]\d{2}/)) {
+      // Verifica se tem horário (formato 24T34, 7T123, etc.)
+      if (trimmedLine.match(/\d{1,3}[MTN]\d{1,4}/)) {
         temHorario = true;
       }
     }
