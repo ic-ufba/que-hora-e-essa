@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Calculator, 
   BookOpen,
   ExternalLink,
   Calendar,
-  Grid3X3,
   Download,
-  Share2,
   Clock,
   Filter,
   Users,

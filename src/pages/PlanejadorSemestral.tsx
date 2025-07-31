@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Filter } from "lucide-react";
 import { 
   Calendar, 
@@ -11,14 +10,10 @@ import {
   Trash2, 
   CheckCircle,
   FileText,
-  Users,
-  Clock,
   BookOpen,
-  AlertTriangle,
   ExternalLink,
   Calculator,
   History,
-  Download
 } from "lucide-react";
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
