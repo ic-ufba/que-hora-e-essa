@@ -15,7 +15,9 @@ import {
   Clock,
   BookOpen,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  Calculator,
+  History
 } from "lucide-react";
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
@@ -35,6 +37,34 @@ const PlanejadorSemestral = () => {
   const [horariosSelecionados, setHorariosSelecionados] = useState<string[]>([]);
   const [logicaFiltroDia, setLogicaFiltroDia] = useState<'OU' | 'E'>('OU');
   const [logicaFiltroHorario, setLogicaFiltroHorario] = useState<'OU' | 'E'>('OU');
+  // Novo estado para restrições de horário
+  const [diasRestritos, setDiasRestritos] = useState<string[]>([]);
+  const [logicaRestricoes, setLogicaRestricoes] = useState<'OU' | 'E'>('OU');
+  const [horariosRestritos, setHorariosRestritos] = useState<string[]>([]);
+  const [logicaRestricoesHorario, setLogicaRestricoesHorario] = useState<'OU' | 'E'>('OU');
+  
+  // Estados para conversão simples
+  const [modoConversao, setModoConversao] = useState<'individual' | 'grade'>('individual');
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
+  const [historico, setHistorico] = useState<string[]>([]);
+  const [historicoDisciplinas, setHistoricoDisciplinas] = useState<Disciplina[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showFormatoEsperado, setShowFormatoEsperado] = useState(false);
+  const [showInstrucoes, setShowInstrucoes] = useState(false);
+  const [showConversaoCompleta, setShowConversaoCompleta] = useState(true);
+  const [showInputSection, setShowInputSection] = useState(true);
+
+  // Detecta se é mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   const diasSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
   const mapSiglaParaNome = {
@@ -54,6 +84,10 @@ const PlanejadorSemestral = () => {
     setHorariosSelecionados([]);
     setLogicaFiltroDia('OU');
     setLogicaFiltroHorario('OU');
+    setDiasRestritos([]);
+    setLogicaRestricoes('OU');
+    setHorariosRestritos([]);
+    setLogicaRestricoesHorario('OU');
   };
 
   const aplicarFiltro = () => {
@@ -72,6 +106,17 @@ const PlanejadorSemestral = () => {
     if (turmasSalvas) {
       setTurmasOrganizadas(JSON.parse(turmasSalvas));
     }
+    
+    // Carrega histórico da conversão simples
+    const historicoSalvo = localStorage.getItem('historicoConversao');
+    if (historicoSalvo) {
+      setHistorico(JSON.parse(historicoSalvo));
+    }
+
+    const historicoDisciplinasSalvo = localStorage.getItem('historicoDisciplinas');
+    if (historicoDisciplinasSalvo) {
+      setHistoricoDisciplinas(JSON.parse(historicoDisciplinasSalvo));
+    }
   }, []);
 
   // Salva a grade no localStorage sempre que ela mudar
@@ -83,6 +128,16 @@ const PlanejadorSemestral = () => {
   useEffect(() => {
     localStorage.setItem('turmasOrganizadas', JSON.stringify(turmasOrganizadas));
   }, [turmasOrganizadas]);
+
+  // Salva o histórico no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem('historicoConversao', JSON.stringify(historico));
+  }, [historico]);
+
+  // Salva o histórico de disciplinas no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem('historicoDisciplinas', JSON.stringify(historicoDisciplinas));
+  }, [historicoDisciplinas]);
 
   const handleConverter = () => {
     if (!inputText.trim()) {
@@ -120,6 +175,7 @@ const PlanejadorSemestral = () => {
 
       setTurmasOrganizadas(turmas);
       setInputText("");
+      setShowInputSection(false); // Colapsa após organizar turmas
       toast({
         title: "Turmas organizadas!",
         description: `${turmas.length} turma(s) encontrada(s) de ${new Set(turmas.map(t => t.codigo)).size} disciplina(s).`,
@@ -176,6 +232,7 @@ const PlanejadorSemestral = () => {
   const handleLimparTurmas = () => {
     setTurmasOrganizadas([]);
     localStorage.removeItem('turmasOrganizadas');
+    setShowInputSection(true); // Expande ao limpar turmas
     toast({
       title: "Turmas limpas",
       description: "Todas as turmas organizadas foram removidas.",
@@ -240,6 +297,56 @@ const PlanejadorSemestral = () => {
     return disciplinasEncontradas.join('\n\n');
   };
 
+  // Função para limpar texto do SIGAA para conversão individual
+  const limparTextoSigaaIndividual = (texto: string): string => {
+    const lines = texto.split('\n');
+    const disciplinasEncontradas: string[] = [];
+    let currentDisciplina: string[] = [];
+    let encontrouDisciplina = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Identifica início de uma disciplina - regex mais flexível
+      const disciplinaMatch = line.match(/^([^\s-]+)\s*-\s*(.+)$/);
+      if (disciplinaMatch) {
+        // Se já temos uma disciplina sendo processada, salva ela
+        if (encontrouDisciplina && currentDisciplina.length > 0) {
+          disciplinasEncontradas.push(currentDisciplina.join('\n'));
+        }
+        
+        // Inicia nova disciplina
+        currentDisciplina = [line];
+        encontrouDisciplina = true;
+        continue;
+      }
+      
+      // Se encontrou uma disciplina, coleta as linhas seguintes até encontrar outra disciplina
+      if (encontrouDisciplina) {
+        // Para quando encontrar outra disciplina ou linha vazia
+        if (line === '' || line.match(/^([A-Z]{3,4}\d{2,3}(?:\.\d+)?)\s*-\s*(.+)$/)) {
+          if (currentDisciplina.length > 0) {
+            disciplinasEncontradas.push(currentDisciplina.join('\n'));
+          }
+          if (line.match(/^([A-Z]{3,4}\d{2,3}(?:\.\d+)?)\s*-\s*(.+)$/)) {
+            currentDisciplina = [line];
+          } else {
+            encontrouDisciplina = false;
+          }
+    } else {
+          currentDisciplina.push(line);
+        }
+      }
+    }
+    
+    // Adiciona última disciplina se existir
+    if (encontrouDisciplina && currentDisciplina.length > 0) {
+      disciplinasEncontradas.push(currentDisciplina.join('\n'));
+    }
+    
+    return disciplinasEncontradas.join('\n\n');
+  };
+
   // Agrupa turmas por disciplina para exibição
   const turmasPorDisciplina = turmasOrganizadas.reduce((acc, turma) => {
     const key = turma.codigo;
@@ -254,16 +361,175 @@ const PlanejadorSemestral = () => {
     return acc;
   }, {} as { [key: string]: { codigo: string; nome: string; turmas: Turma[] } });
 
+  // Funções para conversão individual
+  const validarEntrada = (texto: string): boolean => {
+    const lines = texto.split('\n');
+    let temDisciplina = false;
+    let temHorario = false;
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Verifica se tem código de disciplina
+      if (trimmedLine.match(/^[A-Z]{3,4}\d{2,3}(?:\.\d+)?\s*-\s*.+/)) {
+        temDisciplina = true;
+      }
+      
+      // Verifica se tem horário (formato 24T34 ou similar)
+      if (trimmedLine.match(/\d{2}[MTN]\d{2}/)) {
+        temHorario = true;
+      }
+    }
+    
+    return temDisciplina && temHorario;
+  };
+
+  const handleConverterIndividual = () => {
+    if (!inputText.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, cole o texto do SIGAA antes de converter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validarEntrada(inputText)) {
+      toast({
+        title: "Formato inválido",
+        description: "O texto não parece conter dados válidos do SIGAA. Verifique se inclui código da disciplina e horários.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const textoLimpo = limparTextoSigaaIndividual(inputText);
+      const turmas = parseSigaaText(textoLimpo);
+      
+      if (turmas.length === 0) {
+        toast({
+          title: "Nenhuma turma encontrada",
+          description: "Verifique se o texto colado está no formato correto do SIGAA.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Converte para disciplinas
+      const disciplinasConvertidas = turmas.map(turma => turmaToDisciplina(turma));
+      
+      setDisciplinas(disciplinasConvertidas);
+      
+      // Adiciona ao histórico
+      const codigoDisciplina = turmas[0].codigo;
+      if (!historico.includes(codigoDisciplina)) {
+        setHistorico(prev => [codigoDisciplina, ...prev.slice(0, 9)]); // Mantém apenas os últimos 10
+        setHistoricoDisciplinas(prev => [disciplinasConvertidas[0], ...prev.slice(0, 9)]);
+      }
+      
+      setInputText("");
+      toast({
+        title: "Disciplina convertida!",
+        description: `${turmas.length} turma(s) encontrada(s) para ${codigoDisciplina}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na conversão",
+        description: "Ocorreu um erro ao processar o texto. Verifique o formato.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleHistoricoClick = (codigo: string) => {
+    const disciplina = historicoDisciplinas.find(d => d.codigo === codigo);
+    if (disciplina) {
+      setDisciplinas([disciplina]);
+      toast({
+        title: "Disciplina carregada",
+        description: `${codigo} foi carregada do histórico.`,
+      });
+    }
+  };
+
+  const handleAdicionarAGrade = () => {
+    if (disciplinas.length === 0) {
+      toast({
+        title: "Nenhuma disciplina para adicionar",
+        description: "Converta uma disciplina primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const disciplina = disciplinas[0];
+    const disciplinaJaExiste = gradeAtual.find((d) => d.codigo === disciplina.codigo);
+    
+    if (disciplinaJaExiste) {
+      toast({
+        title: "Disciplina já existe na grade",
+        description: `${disciplina.codigo} já foi adicionada à grade.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGradeAtual((prev) => [...prev, disciplina]);
+    toast({
+      title: "Disciplina adicionada!",
+      description: `${disciplina.codigo} foi adicionada à grade.`,
+    });
+  };
+
+  const handleLimparHistorico = () => {
+    setHistorico([]);
+    setHistoricoDisciplinas([]);
+    localStorage.removeItem('historicoConversao');
+    localStorage.removeItem('historicoDisciplinas');
+    toast({
+      title: "Histórico limpo",
+      description: "Todo o histórico de conversões foi removido.",
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Planejamento Semestral</h1>
-            <p className="text-muted-foreground mt-1">
-              Organize todas as suas disciplinas e visualize conflitos
+            {/* Título principal */}
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Planejamento Semestral</h1>
+            {/* Descrição principal */}
+            <p className="text-base md:text-lg text-gray-600 max-w-2xl">
+              {modoConversao === 'individual' 
+                ? 'Converta as disciplinas desejadas e organize toda a sua grade curricular.'
+                : 'Converta as disciplinas desejadas e organize toda a sua grade curricular.'
+              }
             </p>
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button
+              variant={modoConversao === 'individual' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setModoConversao('individual')}
+              className="flex-1 md:flex-none"
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Individual</span>
+              <span className="sm:hidden">Individual</span>
+            </Button>
+            <Button
+              variant={modoConversao === 'grade' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setModoConversao('grade')}
+              className="flex-1 md:flex-none"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Completa</span>
+              <span className="sm:hidden">Completa</span>
+            </Button>
           </div>
         </div>
 
@@ -271,52 +537,228 @@ const PlanejadorSemestral = () => {
           {/* Input Section */}
           <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Converter Disciplinas
+              <CardHeader 
+                onClick={() => modoConversao === 'grade' && turmasOrganizadas.length > 0 && setShowInputSection(!showInputSection)} 
+                className={`${modoConversao === 'grade' && turmasOrganizadas.length > 0 ? 'cursor-pointer' : ''} select-none`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <FileText className="w-7 h-7 text-blue-700" />
+                  {/* CardTitle */}
+                  <CardTitle className="text-lg md:text-xl font-bold text-blue-900 flex items-center">
+                    {modoConversao === 'individual' ? 'Conversão Individual' : 'Conversão Completa'}
+                    {modoConversao === 'grade' && turmasOrganizadas.length > 0 && <span className="ml-2 text-blue-700 text-2xl">{showInputSection ? '−' : '+'}</span>}
                 </CardTitle>
-                <CardDescription>
-                  Cole o texto completo do SIGAA com todas as disciplinas
+                </div>
+                {/* CardDescription */}
+                <CardDescription className="text-sm md:text-base text-gray-700">
+                  {modoConversao === 'individual' 
+                    ? 'Converta uma disciplina específica'
+                    : 'Converta todas as disciplinas do semestre'
+                  }
                 </CardDescription>
               </CardHeader>
+              {(modoConversao === 'individual' || showInputSection || (modoConversao === 'grade' && turmasOrganizadas.length === 0)) && (
               <CardContent className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-                  <h4 className="font-semibold text-blue-800 mb-2 text-sm md:text-base">Instruções:</h4>
-                  <div className="text-xs md:text-sm text-blue-700 space-y-1">
-                    <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as informações no SIGAA</button>)</p>
-                    <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
-                    <p>3. Cole o conteúdo no campo abaixo</p>
-                  </div>
-                </div>
+                  {modoConversao === 'individual' ? (
+                    <>
+                      {/* Formato esperado para conversão individual */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                        <button
+                          onClick={() => setShowFormatoEsperado(!showFormatoEsperado)}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h4 className="font-semibold text-blue-800 text-sm md:text-base">Formato esperado</h4>
+                          <span className="text-blue-600">{showFormatoEsperado ? '−' : '+'}</span>
+                        </button>
+                        {showFormatoEsperado && (
+                          <div className="text-xs md:text-sm text-blue-700 space-y-1 mt-3">
+                            <div className="bg-white p-2 rounded border font-mono text-xs">
+                              <div>MATA01 - GEOMETRIA ANALÍTICA</div>
+                              <div>Período/ Ano Turma Docente Vgs Reservadas Horários</div>
+                              <div>2025.2 03 JAIME LEONARDO ORJUELA CHAMORRO 5 24T34 (01/09/2025 - 10/01/2026)</div>
+                            </div>
+                            <p className="mt-2">
+                              <button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">
+                                Como acessar as informações no SIGAA
+                              </button>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Instruções para conversão completa */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                        <button
+                          onClick={() => setShowInstrucoes(!showInstrucoes)}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h4 className="font-semibold text-blue-800 text-sm md:text-base">Instruções</h4>
+                          <span className="text-blue-600">{showInstrucoes ? '−' : '+'}</span>
+                        </button>
+                        {showInstrucoes && (
+                          <div className="text-xs md:text-sm text-blue-700 space-y-1 mt-3">
+                            <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as informações no SIGAA</button>)</p>
+                            <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
+                            <p>3. Cole o conteúdo no campo abaixo</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Texto do SIGAA</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Texto do SIGAA</label>
                 <Textarea
-                    placeholder="Cole aqui o texto do SIGAA..."
+                      placeholder={modoConversao === 'individual' 
+                        ? "Cole aqui o texto do SIGAA com uma disciplina..."
+                        : "Cole aqui o texto do SIGAA..."
+                      }
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                    rows={6}
-                    className="min-h-[120px]"
-                />
-                </div>
-                
-                <Button onClick={handleConverter} className="w-full">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Organizar Turmas
+                      rows={6}
+                      className="min-h-[120px]"
+                  />
+                  </div>
+                  
+                  <Button 
+                    onClick={modoConversao === 'individual' ? handleConverterIndividual : handleConverter} 
+                    className="w-full"
+                  >
+                    {modoConversao === 'individual' ? (
+                      <>
+                        <Calculator className="w-4 h-4 mr-2" />
+                        Converter Disciplina
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Organizar Turmas
+                      </>
+                    )}
                 </Button>
               </CardContent>
+              )}
             </Card>
 
+            {/* Seção de Conversão Individual */}
+            {modoConversao === 'individual' && (
+              <>
+                {/* Disciplina Convertida */}
+                {disciplinas.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <CheckCircle className="w-7 h-7 text-green-700" />
+                        <CardTitle className="text-xl font-bold text-green-900">Disciplina Convertida</CardTitle>
+                      </div>
+                      <CardDescription className="text-base text-gray-700">
+                        Visualize a disciplina convertida e adicione à grade
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {disciplinas.map((disciplina) => (
+                        <div key={disciplina.codigo} className="border rounded-lg p-4 bg-muted/30">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">{disciplina.codigo}</h3>
+                              <p className="text-muted-foreground">{disciplina.nome}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge variant="secondary">{disciplina.turma}</Badge>
+                              <Badge variant="outline">{disciplina.vagas === 0 ? 'Sem informação' : disciplina.vagas + ' vagas'}</Badge>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-2">
+                              <div>
+                                <span className="font-semibold text-muted-foreground">Professor:</span>
+                                <p className="mt-1">{disciplina.professor}</p>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-muted-foreground">Período:</span>
+                                <p className="mt-1">{disciplina.periodo}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-muted-foreground">Horários:</span>
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {disciplina.horarios.map((horario, index) => (
+                                  <span key={index} className="inline-block bg-blue-100 text-blue-800 rounded px-2 py-0.5 text-xs font-mono">
+                                    {horario.dia} {horario.horarioInicio} - {horario.horarioFim}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t">
+                            <Button
+                              onClick={handleAdicionarAGrade}
+                              className="flex-1"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Adicionar à Grade
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setDisciplinas([])}
+                              className="flex-1"
+                            >
+                              Limpar Campo
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Histórico */}
+                {historico.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <History className="w-7 h-7 text-gray-700" />
+                        <CardTitle className="text-xl font-bold text-gray-900">Histórico de Conversões</CardTitle>
+                      </div>
+                      <CardDescription className="text-base text-gray-700">
+                        Clique em uma disciplina para carregá-la novamente
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {historico.map((codigo) => (
+                          <button
+                            key={codigo}
+                            onClick={() => handleHistoricoClick(codigo)}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200 transition-colors"
+                          >
+                            {codigo}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-end mt-4">
+                        <Button variant="outline" size="sm" onClick={handleLimparHistorico}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Limpar Histórico
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+
             {/* Turmas Organizadas */}
-            {turmasOrganizadas.length > 0 && (
+            {modoConversao === 'grade' && turmasOrganizadas.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    Turmas Organizadas
-                  </CardTitle>
-                  <CardDescription>
+                  <div className="flex items-center gap-3 mb-2">
+                    <CheckCircle className="w-7 h-7 text-green-700" />
+                    <CardTitle className="text-xl font-bold text-green-900">Turmas Organizadas</CardTitle>
+                  </div>
+                  <CardDescription className="text-base text-gray-700">
                     {turmasOrganizadas.length} turma(s) encontrada(s) de {Object.keys(turmasPorDisciplina).length} disciplina(s) - Clique para ver detalhes
                   </CardDescription>
                 </CardHeader>
@@ -348,28 +790,27 @@ const PlanejadorSemestral = () => {
                       <Filter className="w-4 h-4" />
                       Filtrar
                     </button>
-                  </div>
-
+                </div>
+                
                   {/* Modal de filtro customizado */}
                   {filtroModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setFiltroModalOpen(false)}>
-                      <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[85vh] overflow-y-auto md:max-w-lg md:p-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setFiltroModalOpen(false)}>
+                      <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-lg md:p-6 shadow border" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4 border-b pb-2">
                           <div className="flex items-center gap-2">
-                            <Filter className="w-5 h-5" />
-                            <h3 className="text-lg font-bold">Filtro de matérias</h3>
+                            <Filter className="w-5 h-5 text-blue-600" />
+                            <h3 className="text-lg font-bold text-gray-900">Filtro de matérias</h3>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => setFiltroModalOpen(false)}>
+                          <Button variant="ghost" size="sm" onClick={() => setFiltroModalOpen(false)} className="hover:bg-gray-100">
                             ✕
                           </Button>
                         </div>
-                        
                         <div className="space-y-4">
                           <div>
-                            <div className="font-semibold mb-2 text-sm">Dias da semana:</div>
+                            <div className="font-semibold mb-2 text-sm text-gray-900">Dias da semana:</div>
                             <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
                               {diasSemana.map(dia => (
-                                <label key={dia} className="flex items-center gap-2 p-2 border rounded">
+                                <label key={dia} className="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-50 transition-colors cursor-pointer">
                                   <input
                                     type="checkbox"
                                     checked={diasSelecionados.includes(dia)}
@@ -379,13 +820,13 @@ const PlanejadorSemestral = () => {
                                     }}
                                     className="accent-blue-600"
                                   />
-                                  <span className="text-sm">{dia}</span>
+                                  <span className="text-sm font-medium">{dia}</span>
                                 </label>
                               ))}
                             </div>
-                            <div className="font-semibold mt-3 mb-2 text-sm">Lógica para dias:</div>
+                            <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para dias:</div>
                             <div className="space-y-2 md:flex md:gap-4">
-                              <label className="flex items-center gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={logicaFiltroDia === 'OU'}
@@ -394,7 +835,7 @@ const PlanejadorSemestral = () => {
                                 />
                                 <span className="text-sm">OU (um dia ou outro)</span>
                               </label>
-                              <label className="flex items-center gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={logicaFiltroDia === 'E'}
@@ -404,13 +845,12 @@ const PlanejadorSemestral = () => {
                                 <span className="text-sm">E (um dia e outro)</span>
                               </label>
                             </div>
-                </div>
-                
+                          </div>
                           <div>
-                            <div className="font-semibold mb-2 text-sm">Horários:</div>
+                            <div className="font-semibold mb-2 text-sm text-gray-900">Horários:</div>
                             <div className="grid grid-cols-4 md:flex md:flex-wrap gap-1 md:gap-2 max-h-32 overflow-y-auto">
                               {horariosGrade.map(horario => (
-                                <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm">
+                                <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm bg-white hover:bg-blue-50 transition-colors cursor-pointer">
                                   <input
                                     type="checkbox"
                                     checked={horariosSelecionados.includes(horario)}
@@ -420,13 +860,13 @@ const PlanejadorSemestral = () => {
                                     }}
                                     className="accent-blue-600"
                                   />
-                                  <span>{horario}</span>
+                                  <span className="font-medium">{horario}</span>
                                 </label>
                               ))}
                             </div>
-                            <div className="font-semibold mt-3 mb-2 text-sm">Lógica para horários:</div>
+                            <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para horários:</div>
                             <div className="space-y-2 md:flex md:gap-4">
-                              <label className="flex items-center gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={logicaFiltroHorario === 'OU'}
@@ -435,7 +875,7 @@ const PlanejadorSemestral = () => {
                                 />
                                 <span className="text-sm">OU (um horário ou outro)</span>
                               </label>
-                              <label className="flex items-center gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={logicaFiltroHorario === 'E'}
@@ -446,18 +886,97 @@ const PlanejadorSemestral = () => {
                               </label>
                             </div>
                           </div>
-                          
-                          <div className="flex gap-2 pt-2 border-t">
+                          <div>
+                            <div className="font-semibold mb-2 text-sm text-gray-900">Restrições de Dias (dias que NÃO quer):</div>
+                            <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
+                              {diasSemana.map(dia => (
+                                <label key={dia} className="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={diasRestritos.includes(dia)}
+                                    onChange={e => {
+                                      if (e.target.checked) setDiasRestritos([...diasRestritos, dia]);
+                                      else setDiasRestritos(diasRestritos.filter(d => d !== dia));
+                                    }}
+                                    className="accent-red-600"
+                                  />
+                                  <span className="text-sm font-medium">{dia}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para restrições de dias:</div>
+                            <div className="space-y-2 md:flex md:gap-4">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={logicaRestricoes === 'OU'}
+                                  onChange={() => setLogicaRestricoes('OU')}
+                                  className="accent-red-600"
+                                />
+                                <span className="text-sm">OU (um dia restrito ou outro)</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={logicaRestricoes === 'E'}
+                                  onChange={() => setLogicaRestricoes('E')}
+                                  className="accent-red-600"
+                                />
+                                <span className="text-sm">E (um dia restrito e outro)</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-semibold mb-2 text-sm text-gray-900">Restrições de Horário (horários que NÃO quer):</div>
+                            <div className="grid grid-cols-4 md:flex md:flex-wrap gap-1 md:gap-2 max-h-32 overflow-y-auto">
+                              {horariosGrade.map(horario => (
+                                <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={horariosRestritos.includes(horario)}
+                                    onChange={e => {
+                                      if (e.target.checked) setHorariosRestritos([...horariosRestritos, horario]);
+                                      else setHorariosRestritos(horariosRestritos.filter(h => h !== horario));
+                                    }}
+                                    className="accent-red-600"
+                                  />
+                                  <span className="font-medium">{horario}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para restrições de horário:</div>
+                            <div className="space-y-2 md:flex md:gap-4">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={logicaRestricoesHorario === 'OU'}
+                                  onChange={() => setLogicaRestricoesHorario('OU')}
+                                  className="accent-red-600"
+                                />
+                                <span className="text-sm">OU (um horário restrito ou outro)</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={logicaRestricoesHorario === 'E'}
+                                  onChange={() => setLogicaRestricoesHorario('E')}
+                                  className="accent-red-600"
+                                />
+                                <span className="text-sm">E (um horário restrito e outro)</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 pt-4 border-t">
                             <button
                               type="button"
-                              className="flex-1 px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm"
+                              className="flex-1 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm font-medium transition-colors"
                               onClick={limparFiltro}
                             >
                               Limpar
                             </button>
                             <button
                               type="button"
-                              className="flex-1 px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                              className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
                               onClick={aplicarFiltro}
                             >
                               Aplicar
@@ -467,68 +986,105 @@ const PlanejadorSemestral = () => {
                       </div>
                     </div>
                   )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                  {Object.values(turmasPorDisciplina)
-                    .filter(disciplina =>
-                      (disciplina.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       disciplina.codigo.toLowerCase().includes(searchTerm.toLowerCase())) &&
-                      (
-                        // Se não há filtro, mostra tudo
-                        (diasSelecionados.length === 0 && horariosSelecionados.length === 0) ||
-                        disciplina.turmas.some(turma => {
-                          const horarios = parseHorarios(turma.horarios);
-                          // Lógica para dias
-                          let diasOk = true;
-                          if (diasSelecionados.length > 0) {
-                            if (logicaFiltroDia === 'OU') {
-                              diasOk = horarios.some(h => diasSelecionados.includes(Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia)));
-                            } else {
-                              diasOk = diasSelecionados.every(diaSel => horarios.some(h => h.dia === mapSiglaParaNome[diaSel]));
-                            }
-                          }
-                          // Lógica para horários
-                          let horariosOk = true;
-                          if (horariosSelecionados.length > 0) {
-                            if (logicaFiltroHorario === 'OU') {
-                              horariosOk = horarios.some(h => horariosSelecionados.includes(h.horarioInicio));
-                            } else {
-                              horariosOk = horariosSelecionados.every(hSel => horarios.some(h => h.horarioInicio === hSel));
-                            }
-                          }
-                          return diasOk && horariosOk;
-                        })
-                      )
-                    )
-                    .map((disciplina) => (
-                      <div 
-                        key={disciplina.codigo}
-                        className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setSelectedTurma(disciplina.turmas[0])}
-                      >
-                        <div className="font-semibold text-xs md:text-sm mb-1">{disciplina.codigo}</div>
-                        <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                          {disciplina.nome}
-                        </div>
-                        <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                      {Object.values(turmasPorDisciplina)
+                        .filter(disciplina =>
+                          (disciplina.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           disciplina.codigo.toLowerCase().includes(searchTerm.toLowerCase())) &&
+                          (
+                            // Se não há filtro, mostra tudo
+                            (diasSelecionados.length === 0 && horariosSelecionados.length === 0 && diasRestritos.length === 0 && horariosRestritos.length === 0) ||
+                            disciplina.turmas.some(turma => {
+                              const horarios = parseHorarios(turma.horarios);
+                              
+                              // Lógica para dias (filtro inclusivo)
+                              let diasOk = true;
+                              if (diasSelecionados.length > 0) {
+                                if (logicaFiltroDia === 'OU') {
+                                  diasOk = horarios.some(h => diasSelecionados.includes(Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia)));
+                                } else {
+                                  diasOk = diasSelecionados.every(diaSel => horarios.some(h => h.dia === mapSiglaParaNome[diaSel]));
+                                }
+                              }
+                              
+                              // Lógica para horários (filtro inclusivo)
+                              let horariosOk = true;
+                              if (horariosSelecionados.length > 0) {
+                                if (logicaFiltroHorario === 'OU') {
+                                  horariosOk = horarios.some(h => horariosSelecionados.includes(h.horarioInicio));
+                                } else {
+                                  horariosOk = horariosSelecionados.every(hSel => horarios.some(h => h.horarioInicio === hSel));
+                                }
+                              }
+                              
+                              // Lógica para restrições de dias (filtro exclusivo)
+                              let restricoesDiasOk = true;
+                              if (diasRestritos.length > 0) {
+                                const diasTurma = horarios.map(h => Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia));
+                                if (logicaRestricoes === 'OU') {
+                                  // Se qualquer dia restrito está presente, exclui a turma
+                                  restricoesDiasOk = !diasRestritos.some(diaRestrito => diasTurma.includes(diaRestrito));
+                                } else {
+                                  // Se todos os dias restritos estão presentes, exclui a turma
+                                  restricoesDiasOk = !diasRestritos.every(diaRestrito => diasTurma.includes(diaRestrito));
+                                }
+                              }
+                              
+                              // Lógica para restrições de horários (filtro exclusivo)
+                              let restricoesHorariosOk = true;
+                              if (horariosRestritos.length > 0) {
+                                const horariosTurma = horarios.map(h => h.horarioInicio);
+                                if (logicaRestricoesHorario === 'OU') {
+                                  // Se qualquer horário restrito está presente, exclui a turma
+                                  restricoesHorariosOk = !horariosRestritos.some(horarioRestrito => horariosTurma.includes(horarioRestrito));
+                                } else {
+                                  // Se todos os horários restritos estão presentes, exclui a turma
+                                  restricoesHorariosOk = !horariosRestritos.every(horarioRestrito => horariosTurma.includes(horarioRestrito));
+                                }
+                              }
+                              
+                              return diasOk && horariosOk && restricoesDiasOk && restricoesHorariosOk;
+                            })
+                          )
+                        )
+                        .map((disciplina) => (
+                          <div 
+                            key={disciplina.codigo}
+                            className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => setSelectedTurma(disciplina.turmas[0])}
+                          >
+                            <div className="font-semibold text-xs md:text-sm mb-1">{disciplina.codigo}</div>
+                            <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              {disciplina.nome}
+                            </div>
+                            <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-xs">
-                            {disciplina.turmas.length} turma(s)
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {disciplina.turmas.reduce((total, t) => total + t.vagas, 0)} vagas
+                                {disciplina.turmas.length} turma(s)
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {disciplina.turmas.reduce((total, t) => total + t.vagas, 0)} vagas
                             </Badge>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-            )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
                           </div>
                           
           {/* Grade Section */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg md:text-xl font-semibold">Grade Atual</h2>
+              <div>
+                <h2 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">Grade Atual</h2>
+                <p className="text-gray-600">
+                  {modoConversao === 'individual' 
+                    ? 'Visualize as disciplinas convertidas e organizadas'
+                    : 'Visualize as disciplinas convertidas e organizadas'
+                  }
+                </p>
+              </div>
               {gradeAtual.length > 0 && (
                 <Button variant="outline" size="sm" onClick={handleLimparGrade}>
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -543,7 +1099,10 @@ const PlanejadorSemestral = () => {
                   <Calendar className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <h3 className="text-base md:text-lg font-semibold mb-2">Grade vazia</h3>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Organize disciplinas e adicione turmas para visualizar a grade horária.
+                    {modoConversao === 'individual' 
+                      ? 'Converta uma disciplina e adicione à grade para visualizar.'
+                      : 'Organize disciplinas e adicione turmas para visualizar a grade horária.'
+                    }
                   </p>
                 </CardContent>
               </Card>
@@ -555,13 +1114,13 @@ const PlanejadorSemestral = () => {
                 showNames={false}
               />
             )}
-                                        </div>
+          </div>
         </div>
 
         {/* Dialog de Detalhes da Turma */}
         {selectedTurma && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedTurma(null)}>
-            <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTurma(null)}>
+            <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-bold">{selectedTurma.codigo}</h3>
@@ -570,7 +1129,7 @@ const PlanejadorSemestral = () => {
                 <Button variant="ghost" size="sm" onClick={() => setSelectedTurma(null)}>
                   ✕
                 </Button>
-              </div>
+                                        </div>
               
               <div className="space-y-6">
                 {/* Lista todas as turmas da disciplina */}
@@ -633,8 +1192,8 @@ const PlanejadorSemestral = () => {
 
       {/* Modal de tutorial customizado */}
       {showTutorialModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTutorialModal(false)}>
-          <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto md:max-w-3xl md:p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowTutorialModal(false)}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-3xl md:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />

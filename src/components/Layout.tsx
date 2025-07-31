@@ -23,14 +23,9 @@ const Layout = ({ children }: LayoutProps) => {
   const shouldShowNavigation = location.pathname !== '/';
   
   // Determina se deve mostrar "Grade" baseado na rota atual
-  const shouldShowGrade = location.pathname === '/conversao' || location.pathname === '/planejador';
+  const shouldShowGrade = location.pathname === '/planejador';
 
   const navigation = [
-    {
-      name: 'Conversão Simples',
-      href: '/conversao',
-      icon: Calculator,
-    },
     {
       name: 'Planejamento Semestral',
       href: '/planejador',
@@ -54,43 +49,52 @@ const Layout = ({ children }: LayoutProps) => {
               <img src={logo} alt="Logo QueHoraÉEssa?" className="w-8 h-8 rounded-lg object-contain bg-white" />
               <span className="text-lg md:text-xl font-bold text-gray-900">QueHoraÉEssa?</span>
             </Link>
-            
-            {/* Navegação Desktop */}
-            <nav className="hidden md:flex items-center gap-6">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                      location.pathname === item.href
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Botão Mobile Menu */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
+            {/* Navegação */}
+            {location.pathname === '/grade' ? (
+              <nav className="flex items-center gap-6">
+                <Link
+                  to="/planejador"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">Planejamento</span>
+                </Link>
+              </nav>
+            ) : location.pathname === '/planejador' ? (
+              <nav className="flex items-center gap-6">
+                <Link
+                  to="/grade"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                  <span className="font-medium">Grade</span>
+                </Link>
+              </nav>
+            ) : location.pathname === '/contato' || location.pathname === '/faq' ? (
+              <nav className="flex items-center gap-6">
+                <Link
+                  to="/planejador"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">Planejamento</span>
+                </Link>
+              </nav>
+            ) : (
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            )}
           </div>
-
           {/* Mobile Menu */}
-          {mobileMenuOpen && (
+          {mobileMenuOpen && location.pathname !== '/planejador' && location.pathname !== '/grade' && (
             <nav className="md:hidden mt-4 space-y-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
@@ -161,8 +165,14 @@ const Layout = ({ children }: LayoutProps) => {
                 SIGAA UFBA
               </a>
             </div>
-            <div className="mt-4 text-center">
-              <a href="/faq" className="inline-block text-blue-700 font-medium underline hover:text-blue-900 transition-colors text-base">Perguntas Frequentes</a>
+            <div className="mt-4 text-center space-y-2">
+              <a href="/faq" className="inline-block text-blue-700 font-semibold hover:text-blue-900 transition-colors text-base px-4 py-2 rounded-lg hover:bg-blue-50">
+                Perguntas Frequentes
+              </a>
+              <div className="w-8 h-px bg-blue-200 mx-auto"></div>
+              <a href="/contato" className="inline-block text-blue-700 font-semibold hover:text-blue-900 transition-colors text-base px-4 py-2 rounded-lg hover:bg-blue-50">
+                Contato
+              </a>
             </div>
             {/* Linha de Separação */}
             <div className="border-t border-blue-200 mt-8 pt-8">

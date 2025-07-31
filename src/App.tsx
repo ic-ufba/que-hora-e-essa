@@ -5,11 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Home from "./pages/Home";
-import ConversaoSimples from "./pages/ConversaoSimples";
 import PlanejadorSemestral from "./pages/PlanejadorSemestral";
 import Grade from "./pages/EscalaAtual";
 import NotFound from "./pages/NotFound";
 import FAQ from "./pages/FAQ";
+import Contato from "./pages/Contato";
 import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
@@ -45,10 +45,10 @@ const App = () => (
         <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/conversao" element={<ConversaoSimples />} />
           <Route path="/planejador" element={<PlanejadorSemestral />} />
             <Route path="/grade" element={<Grade />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/contato" element={<Contato />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Layout>

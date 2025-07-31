@@ -49,8 +49,10 @@ const Grade = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Grade Horária</h1>
-          <p className="text-muted-foreground mt-1">
+          {/* Título principal */}
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-2">Grade Horária</h1>
+          {/* Descrição principal */}
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl">
             Visualize sua grade horária completa com todos os detalhes
           </p>
         </div>
@@ -77,7 +79,7 @@ const Grade = () => {
               </div>
               <h3 className="text-base md:text-lg font-semibold mb-2">Grade vazia</h3>
               <p className="text-sm md:text-base text-muted-foreground">
-                Adicione disciplinas nas telas de Conversão Simples ou Planejamento Semestral para visualizar sua grade horária.
+                Adicione disciplinas na tela de Planejamento para visualizar sua grade horária.
               </p>
             </CardContent>
           </Card>

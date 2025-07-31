@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Disciplina } from "@/utils/sigaaParser";
 import { detectConflicts } from "@/utils/sigaaParser";
-import { Trash2, Info, AlertTriangle, Clock, User, BookOpen, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Trash2, Info, AlertTriangle, Clock, User, BookOpen, ChevronDown, ChevronUp, ExternalLink, Calendar } from "lucide-react";
 import React from "react";
 import { Switch } from "@/components/ui/switch";
 
@@ -31,12 +31,130 @@ const HORARIO_PARA_BLOCO: { [key: string]: string } = {
   '18:30': 'N1', '19:25': 'N2', '20:20': 'N3', '21:15': 'N4'
 };
 
+// Função para converter dia do SIGAA para formato iCal
+const getDiaSigaaParaICal = (dia: string): string => {
+  const mapeamento = {
+    'Segunda': 'MO',
+    'Terça': 'TU', 
+    'Quarta': 'WE',
+    'Quinta': 'TH',
+    'Sexta': 'FR',
+    'Sábado': 'SA'
+  };
+  return mapeamento[dia] || 'MO';
+};
+
+// Função para converter horário para formato iCal
+const converterHorarioParaICal = (horario: string): string => {
+  const [hora, minuto] = horario.split(':');
+  return `${hora.padStart(2, '0')}${minuto.padStart(2, '0')}`;
+};
+
+// Função para calcular horário de fim baseado no início
+const calcularHorarioFim = (horarioInicio: string): string => {
+  const horarios = HORARIOS_GRADE;
+  const index = horarios.indexOf(horarioInicio);
+  if (index !== -1 && index < horarios.length - 1) {
+    return horarios[index + 1];
+  }
+  // Se for o último horário, adiciona 55 minutos
+  const [hora, minuto] = horarioInicio.split(':').map(Number);
+  const novaHora = hora + Math.floor((minuto + 55) / 60);
+  const novoMinuto = (minuto + 55) % 60;
+  return `${novaHora.toString().padStart(2, '0')}:${novoMinuto.toString().padStart(2, '0')}`;
+};
+
+// Função para gerar arquivo iCal
+const gerarArquivoICal = (disciplinas: Disciplina[]): string => {
+  let icalContent = 'BEGIN:VCALENDAR\r\n';
+  icalContent += 'VERSION:2.0\r\n';
+  icalContent += 'CALSCALE:GREGORIAN\r\n';
+  icalContent += 'PRODID:-//Horario Facil//Horario UFBA//PT\r\n';
+  
+  // Data de início do semestre (ajuste conforme necessário)
+  const dataInicio = new Date('2025-09-01');
+  const dataFim = new Date('2026-01-10');
+  
+  // Timestamp atual para DTSTAMP
+  const now = new Date();
+  const dtstamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}T${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}Z`;
+  
+  disciplinas.forEach((disciplina, index) => {
+    disciplina.horarios.forEach((horario, horarioIndex) => {
+      if (horario.horarioInicio) {
+        // UID único para cada evento
+        const uid = `disciplina-${disciplina.codigo}-${index}-${horarioIndex}-${Date.now()}@horariofacil.com`;
+        const summary = `${disciplina.codigo} - ${disciplina.nome}`;
+        const description = `Professor: ${disciplina.professor}`;
+        
+        // Converter horário para formato iCal
+        const horarioInicio = converterHorarioParaICal(horario.horarioInicio);
+        const horarioFim = converterHorarioParaICal(calcularHorarioFim(horario.horarioInicio));
+        const diaSemana = getDiaSigaaParaICal(horario.dia);
+        
+        // Data de início do evento (primeira ocorrência)
+        const dataEvento = new Date(dataInicio);
+        const diasSemana = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+        const diaIndex = diasSemana.indexOf(diaSemana);
+        if (diaIndex !== -1) {
+          const diasParaAdicionar = (diaIndex - dataEvento.getDay() + 7) % 7;
+          dataEvento.setDate(dataEvento.getDate() + diasParaAdicionar);
+        }
+        
+        // Formato de data/hora com TZID para compatibilidade com Google Calendar
+        const dtstart = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioInicio}00`;
+        const dtend = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioFim}00`;
+        const until = `${dataFim.getFullYear()}${(dataFim.getMonth() + 1).toString().padStart(2, '0')}${dataFim.getDate().toString().padStart(2, '0')}T235959Z`;
+        
+        icalContent += 'BEGIN:VEVENT\r\n';
+        icalContent += `UID:${uid}\r\n`;
+        icalContent += `DTSTAMP:${dtstamp}\r\n`;
+        icalContent += `SUMMARY:${summary}\r\n`;
+        icalContent += `DESCRIPTION:${description}\r\n`;
+        icalContent += `DTSTART;TZID=America/Bahia:${dtstart}\r\n`;
+        icalContent += `DTEND;TZID=America/Bahia:${dtend}\r\n`;
+        icalContent += `RRULE:FREQ=WEEKLY;BYDAY=${diaSemana};UNTIL=${until}\r\n`;
+        icalContent += 'END:VEVENT\r\n';
+      }
+    });
+  });
+  
+  icalContent += 'END:VCALENDAR\r\n';
+  return icalContent;
+};
+
+// Função para baixar arquivo
+const baixarArquivo = (conteudo: string, nomeArquivo: string) => {
+  const blob = new Blob([conteudo], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false, showNames = true }: GradeHorariaProps) => {
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
   const [selectedConflictCell, setSelectedConflictCell] = useState<string | null>(null);
   const [conflictsOpen, setConflictsOpen] = useState(false);
   const [showDetailed, setShowDetailed] = useState(compact ? false : !compact);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detecta se é mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
   
   const conflicts = detectConflicts(disciplinas);
   
@@ -101,7 +219,25 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
       'bg-yellow-500 text-black',
       'bg-cyan-500 text-white',
       'bg-lime-500 text-black',
-      'bg-amber-500 text-black'
+      'bg-amber-500 text-black',
+      'bg-fuchsia-500 text-white',
+      'bg-rose-500 text-white',
+      'bg-violet-500 text-white',
+      'bg-sky-500 text-white',
+      'bg-emerald-500 text-white',
+      'bg-zinc-500 text-white',
+      'bg-gray-500 text-white',
+      'bg-stone-500 text-white',
+      'bg-orange-700 text-white',
+      'bg-blue-700 text-white',
+      'bg-green-700 text-white',
+      'bg-purple-700 text-white',
+      'bg-pink-700 text-white',
+      'bg-indigo-700 text-white',
+      'bg-yellow-700 text-black',
+      'bg-cyan-700 text-white',
+      'bg-lime-700 text-black',
+      'bg-amber-700 text-black',
     ];
     
     // Gera um índice baseado no código da disciplina para manter consistência
@@ -222,12 +358,32 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
                     </div>
       </div>
 
+      {/* Botão Exportar para Calendário */}
+      {!compact && disciplinas.length > 0 && onRemoverDisciplina && showNames && (
+        <div className="flex flex-col items-end mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const icalContent = gerarArquivoICal(disciplinas);
+              const nomeArquivo = `horario-ufba-${new Date().toISOString().split('T')[0]}.ics`;
+              baixarArquivo(icalContent, nomeArquivo);
+            }}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            Exportar para Calendário
+          </Button>
+          <span className="text-xs text-gray-500 mt-1">*Compatível com Google Calendar, Outlook e outros calendários</span>
+        </div>
+      )}
+
       {/* Disciplina Details Dialog - Removido para evitar conflitos */}
       
       {/* Modal de detalhes da disciplina customizado */}
-      {selectedDisciplina && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDisciplina(null)}>
-          <div className="bg-background rounded-lg p-4 max-w-sm w-full mx-4 max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
+          {selectedDisciplina && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedDisciplina(null)}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -277,7 +433,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
                       <span>{horario.dia}</span>
                       <Badge variant="outline" className="text-xs">
                         {horario.bloco} ({horario.horarioInicio} - {horario.horarioFim})
-                      </Badge>
+                    </Badge>
                     </div>
                   ))}
                 </div>
@@ -285,9 +441,9 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
               
               {onRemoverDisciplina && (
                 <div className="pt-2 border-t">
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => {
                       onRemoverDisciplina(selectedDisciplina.codigo);
                       setSelectedDisciplina(null);
@@ -301,8 +457,8 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
               )}
             </div>
           </div>
-        </div>
-      )}
+            </div>
+          )}
 
       {/* Tutorial Modal - Removido para evitar conflitos */}
     </div>

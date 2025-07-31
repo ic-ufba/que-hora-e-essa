@@ -6,42 +6,51 @@ Sistema web moderno para conversão automática dos códigos de horários do SIG
 
 O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar códigos como `46N12` ou `25M45` em horários reais, permitindo o planejamento do semestre, detecção de conflitos e visualização interativa da grade.
 
-## Criação e Desenvolvimento
-- **Criadora e desenvolvedora: Eduarda Almeida**
-  **[Linkedin](https://www.linkedin.com/in/eduarda-s-almeida)**
-- **Iniciativa: IdeaLab.ic**
+## 🏢 Sobre o Projeto
+- **Iniciativa**: IdeaLab.ic - Laboratório de Ideias do Instituto de Computação da UFBA
+- **Desenvolvedora**: Eduarda Almeida
+- **LinkedIn**: [Eduarda Almeida](https://www.linkedin.com/in/eduarda-s-almeida)
+- **Status**: Projeto ativo e em desenvolvimento
 
 ---
 
 ## 🚀 Funcionalidades Principais
 
-### 🔄 Conversão e Visualização
-- **Conversão Simples**: Cole o texto de uma disciplina do SIGAA e veja o horário convertido de forma clara.
-- **Planejamento Semestral**: Cole todas as disciplinas do semestre, organize, visualize conflitos e monte sua grade personalizada.
-- **Grade Horária Visual**: Veja sua grade semanal em um planner colorido, com detecção automática de conflitos.
-- **Visualização Flexível**: Alternância entre visualização simples (apenas códigos) e detalhada (códigos + nomes das disciplinas).
+### 📋 Conversão e Planejamento
+- **Conversão Individual**: Converta uma disciplina específica do SIGAA em horários legíveis e organizados
+- **Planejamento Completo**: Organize todas as disciplinas do semestre e visualize conflitos
+- **Grade Horária Visual**: Visualize sua grade semanal em um planner colorido e interativo
+- **Histórico de Conversões**: Mantém as últimas 10 disciplinas convertidas para reutilização
 
-### 🔍 Filtros Avançados
-- **Filtro por Dias da Semana**: Selecione dias específicos (SEG, TER, QUA, QUI, SEX, SAB) para filtrar disciplinas.
-- **Filtro por Horários**: Filtre por horários específicos (07:00, 07:55, 08:50, etc.).
-- **Lógica de Filtros**: Configure filtros com lógica "OU" (um dia/horário ou outro) ou "E" (um dia/horário e outro).
-- **Busca por Texto**: Pesquise disciplinas por código ou nome.
+### 🔍 Sistema de Filtros Avançados
+- **Filtro por Dias da Semana**: Selecione dias específicos (SEG, TER, QUA, QUI, SEX, SAB)
+- **Filtro por Horários**: Filtre por horários específicos (07:00, 07:55, 08:50, etc.)
+- **Restrições de Dias**: Exclua dias que você não quer ter aulas
+- **Restrições de Horários**: Exclua horários que você não quer ter aulas
+- **Lógica Flexível**: Configure filtros com lógica "OU" (um dia/horário ou outro) ou "E" (um dia/horário e outro)
+- **Busca por Texto**: Pesquise disciplinas por código ou nome
 
-### 📱 Interface Responsiva
-- **Modais Otimizados para Mobile**: Todos os modais (tutorial, filtros, detalhes) adaptados para telas pequenas.
-- **Layout Proporcional**: Modais com tamanho adequado e margens laterais em dispositivos móveis.
-- **Interação Intuitiva**: Clique fora dos modais para fechá-los automaticamente.
-- **Design Adaptativo**: Interface que se ajusta perfeitamente a desktop e mobile.
-
-### 💾 Persistência e Histórico
-- **Histórico de Conversões**: Mantém as últimas 10 disciplinas convertidas para reutilização.
-- **Persistência Automática**: Suas conversões e grade são salvas automaticamente no navegador.
-- **Sincronização**: Dados mantidos entre sessões e páginas.
+### 📱 Interface Responsiva e Moderna
+- **Design Adaptativo**: Interface que se ajusta perfeitamente a desktop e mobile
+- **Modais Otimizados**: Todos os modais (tutorial, filtros, detalhes) adaptados para cada dispositivo
+- **Navegação Intuitiva**: Sistema de navegação simplificado e eficiente
+- **Visualização Flexível**: Alternância entre visualização simples (apenas códigos) e detalhada
 
 ### ⚠️ Detecção de Conflitos
-- **Conflitos Automáticos**: Identifica automaticamente disciplinas com horários sobrepostos.
-- **Alertas Visuais**: Conflitos destacados com bordas vermelhas e ícones de alerta.
-- **Lista de Conflitos**: Visualização detalhada de todos os conflitos encontrados.
+- **Conflitos Automáticos**: Identifica automaticamente disciplinas com horários sobrepostos
+- **Alertas Visuais**: Conflitos destacados com bordas vermelhas e ícones de alerta
+- **Lista de Conflitos**: Visualização detalhada de todos os conflitos encontrados
+
+### 📅 Exportação para Calendário
+- **Compatibilidade Total**: Exportação para Google Calendar, Outlook e outros calendários
+- **Formato iCalendar (.ics)**: Arquivo padrão compatível com todos os calendários digitais
+- **Eventos Recorrentes**: Configuração automática de repetição semanal
+- **Informações Completas**: Inclui código da disciplina, nome, professor e horários
+
+### 💾 Persistência e Sincronização
+- **Persistência Automática**: Suas conversões e grade são salvas automaticamente no navegador
+- **Sincronização**: Dados mantidos entre sessões e páginas
+- **Histórico Persistente**: Conversões anteriores sempre disponíveis
 
 ---
 
@@ -51,84 +60,46 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 - **Estilo**: Tailwind CSS + Shadcn/ui
 - **Roteamento**: React Router DOM
 - **Validação**: Zod
-- **Gerenciamento de Estado**: TanStack Query (mínimo)
+- **Gerenciamento de Estado**: React Hooks (useState, useEffect)
 - **Persistência**: localStorage
+- **Ícones**: Lucide React
+- **Componentes UI**: Shadcn/ui
 
 ---
 
 ## 📋 Como Usar
+
+### 🚀 Instalação e Execução
 
 1. **Clone o repositório:**
    ```bash
    git clone https://github.com/ic-ufba/que-hora-e-essa.git
    cd que-hora-e-essa
    ```
+
 2. **Instale as dependências:**
    ```bash
    npm install
    ```
-3. **Rode o projeto:**
+
+3. **Execute o projeto:**
    ```bash
    npm run dev
    ```
+
 4. **Acesse no navegador:**
    - http://localhost:5173
 
----
+### 📖 Como Coletar Dados do SIGAA
 
-## 📝 Estrutura das Páginas
+1. Acesse o [SIGAA UFBA](https://sigaa.ufba.br/sigaa/public/home.jsf)
+2. Navegue até **Graduação > Cursos**
+3. Selecione seu curso
+4. Vá em **Ensino > Turmas**
+5. Busque pelo período ou código da disciplina
+6. Copie todo o bloco de informações da disciplina
 
-### 🏠 Home
-- Tutorial visual de coleta de dados do SIGAA
-- Links para as principais funções
-- Exemplos de uso
-
-### 🔄 Conversão Simples
-- Área para colar o texto de uma disciplina e converter rapidamente
-- Histórico das últimas conversões
-- Visualização da disciplina convertida
-- Adição direta à grade horária
-
-### 📅 Planejamento Semestral
-- Área para colar todas as disciplinas do semestre
-- **Filtros avançados** por dias e horários
-- Busca por texto (código ou nome)
-- Organização visual das turmas por disciplina
-- Detalhes completos de cada turma
-- Adição seletiva à grade
-
-### 📊 Grade Horária
-- Visualização detalhada da grade semanal
-- Detecção automática de conflitos
-- Alternância entre visualizações simples/detalhadas
-- Remoção de disciplinas
-- Cores distintas para cada disciplina
-
-### ❓ FAQ
-- Perguntas frequentes e links úteis
-
----
-
-## 🔍 Como Usar os Filtros
-
-### Filtro por Dias
-1. Clique no botão "Filtrar" na seção de turmas organizadas
-2. Selecione os dias da semana desejados
-3. Escolha a lógica: "OU" (um dia ou outro) ou "E" (um dia e outro)
-4. Aplique o filtro
-
-### Filtro por Horários
-1. No mesmo modal de filtro, selecione os horários específicos
-2. Configure a lógica de horários
-3. Combine com filtros de dias se necessário
-
-### Busca por Texto
-- Digite no campo de busca para filtrar por código ou nome da disciplina
-- Funciona em conjunto com os filtros de dias e horários
-
----
-
-## 📦 Exemplo de Entrada Esperada
+### 📝 Formato de Entrada Esperado
 
 ```
 MATA01 - GEOMETRIA ANALÍTICA
@@ -138,42 +109,138 @@ Período/ Ano	Turma	Docente	Vgs Reservadas	Horários
 
 ---
 
-## 🎨 Visual e UX
+## 📱 Estrutura das Páginas
 
-### Design Responsivo
-- Layout adaptativo para desktop e mobile
-- Modais otimizados para cada dispositivo
-- Navegação intuitiva
+### 🏠 Página Inicial
+- **Apresentação do Sistema**: Descrição das funcionalidades principais
+- **Botões de Ação**: Acesso direto ao planejamento e tutorial
+- **Recursos Destacados**: Conversão individual e conversão completa
 
-### Grade Horária
-- Cores distintas para cada disciplina
-- Detecção visual de conflitos
-- Alternância entre visualizações simples e detalhadas
-- Interação por clique para ver detalhes
+### 📅 Página de Planejamento
+- **Conversão Individual**: Converta uma disciplina específica
+  - Formato esperado com exemplo
+  - Histórico de conversões
+  - Visualização da disciplina convertida
+  - Adição à grade
 
-### Modais Mobile
-- Tamanho proporcional à tela
-- Margens laterais adequadas
-- Scroll controlado para conteúdo extenso
-- Fechamento por clique fora do modal
+- **Conversão Completa**: Organize todo o semestre
+  - Conversão de múltiplas disciplinas
+  - Filtros avançados por dia e horário
+  - Busca por texto
+  - Organização visual das turmas
+  - Detalhes completos de cada turma
+
+### 📊 Página de Grade Horária
+- **Visualização Completa**: Grade semanal com todos os detalhes
+- **Detecção de Conflitos**: Alertas visuais para horários sobrepostos
+- **Exportação**: Botão para exportar para calendários digitais
+- **Gerenciamento**: Remoção de disciplinas e limpeza da grade
+
+### ❓ Página de Perguntas Frequentes
+- **FAQ Completo**: Respostas para dúvidas comuns
+- **Links Úteis**: Contato e recursos adicionais
+- **Navegação**: Botão para voltar à página inicial
+
+### 📞 Página de Contato
+- **Informações de Contato**: Email e formulário
+- **Canais de Comunicação**: Múltiplas formas de contato
+- **Navegação**: Botão para voltar à página inicial
 
 ---
 
-## 👨‍💻 Contribuição
+## 🔍 Como Usar os Filtros
 
-Pull requests são bem-vindos! Siga o padrão do projeto e descreva bem suas alterações.
+### Filtro Inclusivo (Dias/Horários que você QUER)
+1. Clique no botão "Filtrar" na seção de turmas organizadas
+2. Selecione os dias da semana desejados
+3. Selecione os horários específicos
+4. Escolha a lógica: "OU" (um dia/horário ou outro) ou "E" (um dia/horário e outro)
+5. Aplique o filtro
+
+### Filtro Exclusivo (Restrições - Dias/Horários que você NÃO quer)
+1. No mesmo modal de filtro, vá para a seção "Restrições"
+2. Selecione os dias que você não quer ter aulas
+3. Selecione os horários que você não quer ter aulas
+4. Configure a lógica de restrições
+5. Aplique o filtro
+
+### Busca por Texto
+- Digite no campo de busca para filtrar por código ou nome da disciplina
+- Funciona em conjunto com todos os outros filtros
+
+---
+
+## 📅 Exportação para Calendário
+
+### Funcionalidades
+- **Compatibilidade Total**: Funciona com Google Calendar, Outlook, Apple Calendar e outros
+- **Eventos Recorrentes**: Configuração automática de repetição semanal
+- **Informações Completas**: Código da disciplina, nome, professor e horários
+- **Fuso Horário**: Configurado para America/Bahia (horário de Brasília)
+
+### Como Exportar
+1. Acesse a página de Grade Horária
+2. Adicione disciplinas à sua grade
+3. Clique em "Exportar para Calendário"
+4. O arquivo .ics será baixado automaticamente
+5. Importe o arquivo no seu calendário preferido
+
+---
+
+## 🎨 Design e Experiência do Usuário
+
+### Interface Responsiva
+- **Desktop**: Layout otimizado para telas grandes
+- **Mobile**: Interface adaptada para dispositivos móveis
+- **Tablet**: Experiência intermediária otimizada
+
+### Grade Horária
+- **Cores Distintas**: Cada disciplina tem uma cor única
+- **Detecção Visual**: Conflitos destacados automaticamente
+- **Interação**: Clique para ver detalhes da disciplina
+- **Flexibilidade**: Alternância entre visualizações simples e detalhadas
+
+---
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/ColabDEV`)
+3. Commit suas mudanças (`git commit -m 'Add some Colaboração DEV'`)
+4. Push para a branch (`git push origin feature/ColabDEV`)
+5. Abra um Pull Request
+
+### Padrões de Código
+- Use TypeScript para todo o código
+- Siga as convenções do ESLint configurado
+- Mantenha a estrutura de pastas existente
+- Documente funções complexas
 
 ---
 
 ## 📄 Licença
 
-MIT. Veja o arquivo LICENSE.
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
 ## 🔗 Links Úteis
 
-- [SIGAA UFBA](https://sigaa.ufba.br/sigaa/public/home.jsf)
-- [Meu Horário UFBA](https://www.meuhorarioufba.com.br/)
-- [FAQ do Projeto](https://quehoraeessa.netlify.app/faq)
-- [Repositório no GitHub](https://github.com/ic-ufba/que-hora-e-essa.git)
+- **[SIGAA UFBA](https://sigaa.ufba.br/sigaa/public/home.jsf)** - Sistema acadêmico da UFBA
+- **[Meu Horário UFBA](https://www.meuhorarioufba.com.br/)** - Projeto inspirador
+- **[IdeaLab.ic](https://github.com/ic-ufba)** - Laboratório de Ideias do IC/UFBA
+- **[Repositório no GitHub](https://github.com/ic-ufba/que-hora-e-essa.git)**
+
+---
+
+## 📞 Suporte
+
+- **Email**: idealab.ic.ufba@gmail.com
+- **Formulário de Contato**: [Link para formulário](https://docs.google.com/forms/d/e/1FAIpQLSeJmzlN7bj6AOlwBqZbcQcw7NRcnsXs2Hay4q4rlzS-yOdijQ/viewform)
+- **FAQ**: [Perguntas Frequentes](/faq)
+
+---
+
+**Nota**: Este projeto não possui nenhuma relação oficial com a UFBA ou o SIGAA. É uma iniciativa independente do IdeaLab.ic para facilitar a vida dos estudantes.
