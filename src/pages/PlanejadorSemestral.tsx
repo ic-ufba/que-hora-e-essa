@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Filter } from "lucide-react";
 import { 
   Calendar, 
@@ -11,14 +10,10 @@ import {
   Trash2, 
   CheckCircle,
   FileText,
-  Users,
-  Clock,
   BookOpen,
-  AlertTriangle,
   ExternalLink,
   Calculator,
   History,
-  Download
 } from "lucide-react";
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
@@ -49,10 +44,8 @@ const PlanejadorSemestral = () => {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [historico, setHistorico] = useState<string[]>([]);
   const [historicoDisciplinas, setHistoricoDisciplinas] = useState<Disciplina[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
   const [showFormatoEsperado, setShowFormatoEsperado] = useState(false);
   const [showInstrucoes, setShowInstrucoes] = useState(false);
-  const [showConversaoCompleta, setShowConversaoCompleta] = useState(true);
   const [showInputSection, setShowInputSection] = useState(true);
   
   // Estados para histórico de cursos consultados
@@ -62,19 +55,6 @@ const PlanejadorSemestral = () => {
   // Estados para histórico de grades salvas
   const [historicoGrades, setHistoricoGrades] = useState<{ [key: string]: Disciplina[] }>({});
   const [showHistoricoGrades, setShowHistoricoGrades] = useState(false);
-  const [nomeGradeAtual, setNomeGradeAtual] = useState("");
-
-  // Detecta se é mobile
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const diasSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
   const mapSiglaParaNome = {
@@ -828,8 +808,8 @@ const PlanejadorSemestral = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {disciplinas.map((disciplina) => (
-                        <div key={disciplina.codigo} className="border rounded-lg p-4 bg-muted/30">
+                      {disciplinas.map((disciplina, idx) => (
+                        <div key={idx} className="border rounded-lg p-4 bg-muted/30">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                             <div>
                               <h3 className="font-semibold text-lg">{disciplina.codigo}</h3>
@@ -898,9 +878,9 @@ const PlanejadorSemestral = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        {historico.map((codigo) => (
+                        {historico.map((codigo, idx) => (
                           <button
-                            key={codigo}
+                            key={idx}
                             onClick={() => handleHistoricoClick(codigo)}
                             className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200 transition-colors"
                           >
@@ -1217,9 +1197,9 @@ const PlanejadorSemestral = () => {
                             })
                           )
                         )
-                        .map((disciplina) => (
+                        .map((disciplina, idx) => (
                           <div 
-                            key={disciplina.codigo}
+                            key={idx}
                             className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => setSelectedTurma(disciplina.turmas[0])}
                           >
@@ -1256,9 +1236,9 @@ const PlanejadorSemestral = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {historicoCursos.map((nomeCurso) => (
+                      {historicoCursos.map((nomeCurso, idx) => (
                         <button
-                          key={nomeCurso}
+                          key={idx}
                           onClick={() => handleHistoricoCursosClick(nomeCurso)}
                           className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm hover:bg-indigo-200 transition-colors"
                         >
@@ -1442,8 +1422,8 @@ const PlanejadorSemestral = () => {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {disciplinas.slice(0, 5).map((disciplina) => (
-                          <span key={disciplina.codigo} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        {disciplinas.slice(0, 5).map((disciplina, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                             {disciplina.codigo}
                           </span>
                         ))}

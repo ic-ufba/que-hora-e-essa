@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Trash2,
-  BookOpen,
-  ExternalLink,
   Download,
   History
 } from "lucide-react";
@@ -119,17 +117,8 @@ const Grade = () => {
             Visualize sua grade horária completa com todos os detalhes
           </p>
         </div>
-        {gradeAtual.length > 0 && (
-          <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSalvarGrade}
-              className="flex items-center gap-2 w-full md:w-auto"
-            >
-              <Download className="w-4 h-4" />
-              Salvar Grade
-            </Button>
+        <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+          {Object.keys(historicoGrades).length > 0 && (
             <Button
               variant="outline"
               size="sm"
@@ -139,17 +128,31 @@ const Grade = () => {
               <History className="w-4 h-4" />
               Histórico
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLimparGrade}
-              className="flex items-center gap-2 w-full md:w-auto"
-            >
-              <Trash2 className="w-4 h-4" />
-              Limpar Grade
-            </Button>
-          </div>
-        )}
+          )}
+          {gradeAtual.length > 0 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSalvarGrade}
+                className="flex items-center gap-2 w-full md:w-auto"
+              >
+                <Download className="w-4 h-4" />
+                Salvar Grade
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLimparGrade}
+                className="flex items-center gap-2 w-full md:w-auto"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpar Grade
+              </Button>
+              </>
+          )}
+        </div>
       </div>
 
       {/* Grade Section */}
