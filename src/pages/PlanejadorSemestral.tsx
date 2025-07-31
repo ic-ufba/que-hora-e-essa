@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   ExternalLink,
   Calculator,
-  History
+  History,
+  Download
 } from "lucide-react";
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
@@ -53,6 +54,15 @@ const PlanejadorSemestral = () => {
   const [showInstrucoes, setShowInstrucoes] = useState(false);
   const [showConversaoCompleta, setShowConversaoCompleta] = useState(true);
   const [showInputSection, setShowInputSection] = useState(true);
+  
+  // Estados para histórico de cursos consultados
+  const [historicoCursos, setHistoricoCursos] = useState<string[]>([]);
+  const [historicoCursosDisciplinas, setHistoricoCursosDisciplinas] = useState<{ [key: string]: Turma[] }>({});
+  
+  // Estados para histórico de grades salvas
+  const [historicoGrades, setHistoricoGrades] = useState<{ [key: string]: Disciplina[] }>({});
+  const [showHistoricoGrades, setShowHistoricoGrades] = useState(false);
+  const [nomeGradeAtual, setNomeGradeAtual] = useState("");
 
   // Detecta se é mobile
   useEffect(() => {
@@ -117,6 +127,23 @@ const PlanejadorSemestral = () => {
     if (historicoDisciplinasSalvo) {
       setHistoricoDisciplinas(JSON.parse(historicoDisciplinasSalvo));
     }
+    
+    // Carrega histórico de cursos consultados
+    const historicoCursosSalvo = localStorage.getItem('historicoCursos');
+    if (historicoCursosSalvo) {
+      setHistoricoCursos(JSON.parse(historicoCursosSalvo));
+    }
+    
+    const historicoCursosDisciplinasSalvo = localStorage.getItem('historicoCursosDisciplinas');
+    if (historicoCursosDisciplinasSalvo) {
+      setHistoricoCursosDisciplinas(JSON.parse(historicoCursosDisciplinasSalvo));
+    }
+    
+    // Carrega histórico de grades salvas
+    const historicoGradesSalvo = localStorage.getItem('historicoGrades');
+    if (historicoGradesSalvo) {
+      setHistoricoGrades(JSON.parse(historicoGradesSalvo));
+    }
   }, []);
 
   // Salva a grade no localStorage sempre que ela mudar
@@ -138,6 +165,21 @@ const PlanejadorSemestral = () => {
   useEffect(() => {
     localStorage.setItem('historicoDisciplinas', JSON.stringify(historicoDisciplinas));
   }, [historicoDisciplinas]);
+  
+  // Salva o histórico de cursos no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem('historicoCursos', JSON.stringify(historicoCursos));
+  }, [historicoCursos]);
+  
+  // Salva o histórico de cursos disciplinas no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem('historicoCursosDisciplinas', JSON.stringify(historicoCursosDisciplinas));
+  }, [historicoCursosDisciplinas]);
+  
+  // Salva o histórico de grades no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem('historicoGrades', JSON.stringify(historicoGrades));
+  }, [historicoGrades]);
 
   const handleConverter = () => {
     if (!inputText.trim()) {
@@ -174,6 +216,17 @@ const PlanejadorSemestral = () => {
       }
 
       setTurmasOrganizadas(turmas);
+      
+      // Extrai nome do curso e adiciona ao histórico
+      const nomeCurso = extrairNomeCurso(inputText);
+      if (nomeCurso && !historicoCursos.includes(nomeCurso)) {
+        setHistoricoCursos(prev => [nomeCurso, ...prev.slice(0, 9)]); // Mantém apenas os últimos 10
+        setHistoricoCursosDisciplinas(prev => ({
+          ...prev,
+          [nomeCurso]: turmas
+        }));
+      }
+      
       setInputText("");
       setShowInputSection(false); // Colapsa após organizar turmas
       toast({
@@ -297,51 +350,92 @@ const PlanejadorSemestral = () => {
     return disciplinasEncontradas.join('\n\n');
   };
 
-  // Função para limpar texto do SIGAA para conversão individual
+  // Função para extrair nome do curso do texto do SIGAA
+  const extrairNomeCurso = (texto: string): string => {
+    const lines = texto.split('\n');
+    for (const line of lines) {
+      const match = line.match(/CURSO DE (.+?)\s*\/\s*[A-Z]+/);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+    return "";
+  };
+
+  // Função para limpar texto do SIGAA para conversão individual - agora usa a mesma lógica da conversão completa
   const limparTextoSigaaIndividual = (texto: string): string => {
     const lines = texto.split('\n');
     const disciplinasEncontradas: string[] = [];
     let currentDisciplina: string[] = [];
     let encontrouDisciplina = false;
+    let encontrouCabecalho = false;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Identifica início de uma disciplina - regex mais flexível
-      const disciplinaMatch = line.match(/^([^\s-]+)\s*-\s*(.+)$/);
+      // Pula linhas vazias no início
+      if (line === '' && !encontrouDisciplina) {
+        continue;
+      }
+      
+      // Identifica início de uma disciplina (código - nome) - regex mais flexível
+      const disciplinaMatch = line.match(/^([A-Z]{3,8}\d{1,4}(?:\.\d+)?)\s*-\s*(.+)$/);
       if (disciplinaMatch) {
-        // Se já temos uma disciplina sendo processada, salva ela
-        if (encontrouDisciplina && currentDisciplina.length > 0) {
+        // Se já temos uma disciplina sendo processada e válida, salva ela
+        if (encontrouDisciplina && encontrouCabecalho && currentDisciplina.length >= 3) {
           disciplinasEncontradas.push(currentDisciplina.join('\n'));
         }
         
         // Inicia nova disciplina
         currentDisciplina = [line];
         encontrouDisciplina = true;
+        encontrouCabecalho = false;
         continue;
       }
       
-      // Se encontrou uma disciplina, coleta as linhas seguintes até encontrar outra disciplina
-      if (encontrouDisciplina) {
-        // Para quando encontrar outra disciplina ou linha vazia
-        if (line === '' || line.match(/^([A-Z]{3,4}\d{2,3}(?:\.\d+)?)\s*-\s*(.+)$/)) {
-          if (currentDisciplina.length > 0) {
+      // Identifica cabeçalho da tabela - mais flexível
+      if (encontrouDisciplina && !encontrouCabecalho && 
+          (line.includes('Período') || line.includes('Ano')) && 
+          (line.includes('Turma') || line.includes('Docente') || line.includes('Vgs') || line.includes('Horários'))) {
+        currentDisciplina.push(line);
+        encontrouCabecalho = true;
+        continue;
+      }
+      
+      // Se encontrou uma disciplina e cabeçalho, coleta as linhas de dados até encontrar outra disciplina
+      if (encontrouDisciplina && encontrouCabecalho) {
+        // Para quando encontrar outra disciplina
+        if (line.match(/^([A-Z]{3,8}\d{1,4}(?:\.\d+)?)\s*-\s*(.+)$/)) {
+          // Salva disciplina atual se tiver dados válidos
+          if (currentDisciplina.length >= 3) {
             disciplinasEncontradas.push(currentDisciplina.join('\n'));
           }
-          if (line.match(/^([A-Z]{3,4}\d{2,3}(?:\.\d+)?)\s*-\s*(.+)$/)) {
-            currentDisciplina = [line];
-          } else {
-            encontrouDisciplina = false;
-          }
-    } else {
+          // Inicia nova disciplina
+          currentDisciplina = [line];
+          encontrouCabecalho = false;
+        } else if (line.trim() !== '') {
+          // Adiciona linha de dados se não estiver vazia
           currentDisciplina.push(line);
         }
       }
     }
     
-    // Adiciona última disciplina se existir
-    if (encontrouDisciplina && currentDisciplina.length > 0) {
+    // Adiciona última disciplina se for válida
+    if (encontrouDisciplina && encontrouCabecalho && currentDisciplina.length >= 3) {
       disciplinasEncontradas.push(currentDisciplina.join('\n'));
+    }
+    
+    // Se não encontrou cabeçalho mas tem disciplina e dados, tenta processar mesmo assim
+    if (encontrouDisciplina && !encontrouCabecalho && currentDisciplina.length >= 2) {
+      // Adiciona um cabeçalho padrão se não foi encontrado
+      const disciplinaLine = currentDisciplina[0];
+      const dataLine = currentDisciplina[1];
+      
+      // Verifica se a linha de dados tem formato de turma (período, turma, docente, vagas, horários)
+      if (dataLine.match(/\d{4}\.\d\s+\w+\s+.*?\s+\d*\s+.*?\s*\(.*?\)/)) {
+        const headerLine = "Período/ Ano\tTurma\tDocente\tVgs Reservadas\tHorários";
+        disciplinasEncontradas.push([disciplinaLine, headerLine, dataLine].join('\n'));
+      }
     }
     
     return disciplinasEncontradas.join('\n\n');
@@ -370,14 +464,19 @@ const PlanejadorSemestral = () => {
     for (const line of lines) {
       const trimmedLine = line.trim();
       
-      // Verifica se tem código de disciplina
-      if (trimmedLine.match(/^[A-Z]{3,4}\d{2,3}(?:\.\d+)?\s*-\s*.+/)) {
+      // Verifica se tem código de disciplina - regex mais flexível
+      if (trimmedLine.match(/^[A-Z]{3,8}\d{1,4}(?:\.\d+)?\s*-\s*.+/)) {
         temDisciplina = true;
       }
       
-      // Verifica se tem horário (formato 24T34, 7T123, 3N34 6N3, etc.)
+      // Verifica se tem horário (formato 24T34, 7T123, 3N34 6N3, etc.) - mais flexível
       if (trimmedLine.match(/\d{1,3}[MTN]\d{1,4}(\s+\d{1,3}[MTN]\d{1,4})*/)) {
         temHorario = true;
+      }
+      
+      // Verifica se tem período (formato 2025.2)
+      if (trimmedLine.match(/\d{4}\.\d/)) {
+        temHorario = true; // Se tem período, provavelmente tem horário também
       }
     }
     
@@ -490,6 +589,77 @@ const PlanejadorSemestral = () => {
     toast({
       title: "Histórico limpo",
       description: "Todo o histórico de conversões foi removido.",
+    });
+  };
+  
+  const handleLimparHistoricoCursos = () => {
+    setHistoricoCursos([]);
+    setHistoricoCursosDisciplinas({});
+    localStorage.removeItem('historicoCursos');
+    localStorage.removeItem('historicoCursosDisciplinas');
+    toast({
+      title: "Histórico de cursos limpo",
+      description: "Todo o histórico de cursos consultados foi removido.",
+    });
+  };
+  
+  const handleHistoricoCursosClick = (nomeCurso: string) => {
+    const turmas = historicoCursosDisciplinas[nomeCurso];
+    if (turmas) {
+      setTurmasOrganizadas(turmas);
+      setShowInputSection(false);
+      toast({
+        title: "Curso carregado",
+        description: `${nomeCurso} foi carregado do histórico.`,
+      });
+    }
+  };
+  
+  const handleSalvarGrade = () => {
+    if (gradeAtual.length === 0) {
+      toast({
+        title: "Grade vazia",
+        description: "Adicione disciplinas à grade antes de salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const nome = prompt("Digite um nome para salvar esta grade:");
+    if (nome && nome.trim()) {
+      const nomeTrim = nome.trim();
+      setHistoricoGrades(prev => ({
+        ...prev,
+        [nomeTrim]: [...gradeAtual]
+      }));
+      toast({
+        title: "Grade salva!",
+        description: `Grade "${nomeTrim}" foi salva com sucesso.`,
+      });
+    }
+  };
+  
+  const handleCarregarGrade = (nomeGrade: string) => {
+    const grade = historicoGrades[nomeGrade];
+    if (grade) {
+      setGradeAtual(grade);
+      setShowHistoricoGrades(false);
+      toast({
+        title: "Grade carregada!",
+        description: `Grade "${nomeGrade}" foi carregada com sucesso.`,
+      });
+    }
+  };
+  
+  const handleRemoverGrade = (nomeGrade: string) => {
+    setHistoricoGrades(prev => {
+      const novo = { ...prev };
+      delete novo[nomeGrade];
+      return novo;
+    });
+    toast({
+      title: "Grade removida",
+      description: `Grade "${nomeGrade}" foi removida do histórico.`,
     });
   };
 
@@ -1071,6 +1241,40 @@ const PlanejadorSemestral = () => {
                   </CardContent>
                 </Card>
               )}
+              
+              {/* Histórico de Cursos Consultados */}
+              {modoConversao === 'grade' && historicoCursos.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3 mb-2">
+                      <History className="w-7 h-7 text-gray-700" />
+                      <CardTitle className="text-xl font-bold text-gray-900">Histórico de Cursos Consultados</CardTitle>
+                    </div>
+                    <CardDescription className="text-base text-gray-700">
+                      Clique em um curso para carregá-lo novamente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {historicoCursos.map((nomeCurso) => (
+                        <button
+                          key={nomeCurso}
+                          onClick={() => handleHistoricoCursosClick(nomeCurso)}
+                          className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm hover:bg-indigo-200 transition-colors"
+                        >
+                          {nomeCurso}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-end mt-4">
+                      <Button variant="outline" size="sm" onClick={handleLimparHistoricoCursos}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Limpar Histórico
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
                           </div>
                           
           {/* Grade Section */}
@@ -1089,7 +1293,7 @@ const PlanejadorSemestral = () => {
                 <Button variant="outline" size="sm" onClick={handleLimparGrade}>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Limpar Grade
-                              </Button>
+                </Button>
               )}
             </div>
 
@@ -1189,6 +1393,74 @@ const PlanejadorSemestral = () => {
               </div>
             )}
           </div>
+
+      {/* Modal de histórico de grades */}
+      {showHistoricoGrades && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowHistoricoGrades(false)}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4 border-b pb-2">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-bold text-gray-900">Histórico de Grades Salvas</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowHistoricoGrades(false)} className="hover:bg-gray-100">
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {Object.keys(historicoGrades).length === 0 ? (
+                <div className="text-center py-8">
+                  <History className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">Nenhuma grade salva encontrada</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {Object.entries(historicoGrades).map(([nomeGrade, disciplinas]) => (
+                    <div key={nomeGrade} className="border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{nomeGrade}</h4>
+                          <p className="text-sm text-muted-foreground">{disciplinas.length} disciplina(s)</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleCarregarGrade(nomeGrade)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            Carregar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRemoverGrade(nomeGrade)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {disciplinas.slice(0, 5).map((disciplina) => (
+                          <span key={disciplina.codigo} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                            {disciplina.codigo}
+                          </span>
+                        ))}
+                        {disciplinas.length > 5 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                            +{disciplinas.length - 5} mais
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de tutorial customizado */}
       {showTutorialModal && (

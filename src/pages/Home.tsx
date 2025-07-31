@@ -12,7 +12,8 @@ import {
   Clock,
   Filter,
   Users,
-  CheckCircle
+  CheckCircle,
+  History
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/components/image/logo.png";
@@ -149,10 +150,25 @@ const Home = () => {
             <h3 className="font-semibold text-gray-900 mb-2">Filtros Avançados</h3>
             <p className="text-sm text-gray-600">Filtre disciplinas por dia, horário e restrições personalizadas</p>
           </div>
-                <div className="text-center">
+          <div className="text-center">
             <Download className="w-12 h-12 text-green-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">Exportação</h3>
             <p className="text-sm text-gray-600">Exporte sua grade para calendários digitais (Google Calendar, Outlook, etc.)</p>
+          </div>
+          <div className="text-center">
+            <History className="w-12 h-12 text-purple-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Histórico de Cursos</h3>
+            <p className="text-sm text-gray-600">Acesse rapidamente cursos consultados anteriormente</p>
+          </div>
+          <div className="text-center">
+            <Download className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Salvar Grades</h3>
+            <p className="text-sm text-gray-600">Salve e carregue suas grades personalizadas com nomes customizados</p>
+          </div>
+          <div className="text-center">
+            <Users className="w-12 h-12 text-teal-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Detecção de Conflitos</h3>
+            <p className="text-sm text-gray-600">Identifique automaticamente conflitos de horários entre disciplinas</p>
           </div>
         </div>
       </section>

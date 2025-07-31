@@ -21,6 +21,8 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 - **Planejamento Completo**: Organize todas as disciplinas do semestre e visualize conflitos
 - **Grade Horária Visual**: Visualize sua grade semanal em um planner colorido e interativo
 - **Histórico de Conversões**: Mantém as últimas 10 disciplinas convertidas para reutilização
+- **Histórico de Cursos**: Acesse rapidamente cursos consultados anteriormente na conversão completa
+- **Salvamento de Grades**: Salve e carregue suas grades personalizadas com nomes customizados
 
 ### 🔍 Sistema de Filtros Avançados
 - **Filtro por Dias da Semana**: Selecione dias específicos (SEG, TER, QUA, QUI, SEX, SAB)
@@ -51,6 +53,8 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 - **Persistência Automática**: Suas conversões e grade são salvas automaticamente no navegador
 - **Sincronização**: Dados mantidos entre sessões e páginas
 - **Histórico Persistente**: Conversões anteriores sempre disponíveis
+- **Histórico de Cursos**: Cursos consultados são salvos para acesso rápido
+- **Grades Personalizadas**: Salve múltiplas versões da sua grade com nomes customizados
 
 ---
 
@@ -135,6 +139,8 @@ Período/ Ano	Turma	Docente	Vgs Reservadas	Horários
 - **Detecção de Conflitos**: Alertas visuais para horários sobrepostos
 - **Exportação**: Botão para exportar para calendários digitais
 - **Gerenciamento**: Remoção de disciplinas e limpeza da grade
+- **Salvamento de Grades**: Salve a grade atual com um nome personalizado
+- **Histórico de Grades**: Acesse e carregue grades salvas anteriormente
 
 ### ❓ Página de Perguntas Frequentes
 - **FAQ Completo**: Respostas para dúvidas comuns
@@ -167,6 +173,18 @@ Período/ Ano	Turma	Docente	Vgs Reservadas	Horários
 ### Busca por Texto
 - Digite no campo de busca para filtrar por código ou nome da disciplina
 - Funciona em conjunto com todos os outros filtros
+
+### Histórico de Cursos
+- Após converter um curso completo, ele é automaticamente salvo no histórico
+- Clique em qualquer curso do histórico para carregá-lo novamente
+- Use o botão "Limpar Histórico" para remover todos os cursos salvos
+
+### Salvamento de Grades
+- Na página de Grade Horária, clique em "Salvar Grade" para salvar a grade atual
+- Digite um nome personalizado para identificar a grade
+- Use o botão "Histórico" para ver todas as grades salvas
+- Clique em "Carregar" para restaurar uma grade específica
+- Use o botão de lixeira para remover grades do histórico
 
 ---
 
