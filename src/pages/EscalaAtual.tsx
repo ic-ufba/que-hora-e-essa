@@ -19,14 +19,12 @@ const Grade = () => {
   // Carrega a grade do localStorage ao inicializar
   useEffect(() => {
     const gradeSalva = localStorage.getItem('gradeHoraria');
-    console.log('gradeSalva', gradeSalva);
     if (gradeSalva) {
       setGradeAtual(JSON.parse(gradeSalva));
     }
     
     // Carrega histórico de grades salvas
     const historicoGradesSalvo = localStorage.getItem('historicoGrades');
-    console.log('historicoGradesSalvo', historicoGradesSalvo);
     if (historicoGradesSalvo) {
       setHistoricoGrades(JSON.parse(historicoGradesSalvo));
     }

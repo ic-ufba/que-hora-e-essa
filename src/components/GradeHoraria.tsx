@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Disciplina } from "@/utils/sigaaParser";
 import { detectConflicts } from "@/utils/sigaaParser";
-import { Trash2, Info, AlertTriangle, Clock, User, BookOpen, ChevronDown, ChevronUp, ExternalLink, Calendar } from "lucide-react";
+import { Trash2, AlertTriangle, Clock, User, BookOpen, Calendar, ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import { Switch } from "@/components/ui/switch";
 
@@ -138,23 +135,8 @@ const baixarArquivo = (conteudo: string, nomeArquivo: string) => {
 
 export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false, showNames = true }: GradeHorariaProps) => {
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
-  const [selectedConflictCell, setSelectedConflictCell] = useState<string | null>(null);
   const [conflictsOpen, setConflictsOpen] = useState(false);
   const [showDetailed, setShowDetailed] = useState(compact ? false : !compact);
-  const [showTutorialModal, setShowTutorialModal] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  
-  // Detecta se é mobile
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
   
   const conflicts = detectConflicts(disciplinas);
   
@@ -283,7 +265,8 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
         <div className="flex flex-col items-center justify-center w-full my-2">
           <div className="flex items-center gap-1 text-red-800 font-bold text-xs md:text-base">
             <AlertTriangle className="h-5 w-5 mr-1 text-red-500" />
-            <span>Conflito de Horários Detectados</span>
+            <span>Conflito de Horários Detectado</span>
+            {conflictsOpen ? <ArrowUp className="h-5 w-5 cursor-pointer" onClick={() => setConflictsOpen(false)}/> : <ArrowDown className="h-5 w-5 cursor-pointer" onClick={() => setConflictsOpen(true)} />}
           </div>
           {conflictsOpen && (
             <div className="pt-1 pb-2">
