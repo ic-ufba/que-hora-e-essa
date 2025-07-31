@@ -100,7 +100,7 @@ export function parseSigaaText(text: string): Turma[] {
         vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
         turma = turma ? turma : '(Sem informação)';
         docente = docente ? docente : '(Sem informação)';
-        vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
+        const vagasNum = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
         
         // Valida se o horário está no formato correto (deve conter códigos como 24T34, 7M456, etc.)
         if (horariosStr.match(/\d+[MTN]\d+/)) {
@@ -112,7 +112,7 @@ export function parseSigaaText(text: string): Turma[] {
             periodo: periodo,
             turma: turma,
             docente: docente,
-            vagas: vagas,
+            vagas: vagasNum,
             horarios: horariosStr || '(Sem informação)',
             dataInicio: dataInicio || '(Sem informação)',
             dataFim: dataFim || '(Sem informação)'
@@ -158,16 +158,16 @@ export function parseSigaaText(text: string): Turma[] {
           if (parts.length >= 6) {
             const periodo = parts[0];
             let turma = parts[1];
-            let vagas = parts[parts.length - 3];
+            let vagasStr = parts[parts.length - 3];
             const horariosStr = parts[parts.length - 2];
             const datas = parts[parts.length - 1];
             let docente = parts.slice(2, parts.length - 3).join(' ');
             turma = turma ? turma.replace(/\s+/g, ' ').trim() : '';
             docente = docente ? docente.replace(/\s+/g, ' ').trim() : '';
-            vagas = vagas ? vagas.replace(/\s+/g, ' ').trim() : '';
+            vagasStr = vagasStr ? vagasStr.replace(/\s+/g, ' ').trim() : '';
             turma = turma ? turma : '(Sem informação)';
             docente = docente ? docente : '(Sem informação)';
-            vagas = vagas && !isNaN(Number(vagas)) ? parseInt(vagas) : 0;
+            const vagasNum = vagasStr && !isNaN(Number(vagasStr)) ? parseInt(vagasStr) : 0;
             // Valida se o horário está no formato correto
             if (horariosStr.match(/\d+[MTN]\d+/) && datas.includes('(') && datas.includes(')')) {
               const [dataInicio, dataFim] = datas.replace(/[()]/g, '').split(' - ');
@@ -177,7 +177,7 @@ export function parseSigaaText(text: string): Turma[] {
                 periodo: periodo || '(Sem informação)',
                 turma: turma,
                 docente: docente,
-                vagas: vagas,
+                vagas: vagasNum,
                 horarios: horariosStr || '(Sem informação)',
                 dataInicio: dataInicio || '(Sem informação)',
                 dataFim: dataFim || '(Sem informação)'
@@ -285,32 +285,4 @@ export function detectConflicts(disciplinas: Disciplina[]): { [key: string]: str
   });
   
   return conflicts;
-}
-
-export function gerarHorariosLegiveis(disciplina: Disciplina): string {
-  const horariosPorDia: { [dia: string]: Array<{ horarioInicio: string; horarioFim: string }> } = {};
-  
-  // Agrupa horários por dia
-  disciplina.horarios.forEach(horario => {
-    if (!horariosPorDia[horario.dia]) {
-      horariosPorDia[horario.dia] = [];
-    }
-    horariosPorDia[horario.dia].push({
-      horarioInicio: horario.horarioInicio || '',
-      horarioFim: horario.horarioFim || ''
-    });
-  });
-  
-  // Gera texto legível
-  const dias = Object.keys(horariosPorDia);
-  if (dias.length === 0) return 'Horários não definidos';
-  
-  // Formata cada dia com seus horários
-  const diasFormatados = dias.map(dia => {
-    const horarios = horariosPorDia[dia];
-    const horario = horarios[0]; // Pega o primeiro horário do dia
-    return `${dia} ${horario.horarioInicio} às ${horario.horarioFim}`;
-  });
-  
-  return diasFormatados.join('\n');
 }
