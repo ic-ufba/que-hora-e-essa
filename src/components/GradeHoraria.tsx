@@ -55,6 +55,60 @@ const calcularHorarioFim = (horarioInicio: string): string => {
   return `${novaHora.toString().padStart(2, '0')}:${novoMinuto.toString().padStart(2, '0')}`;
 };
 
+// Função para agrupar horários consecutivos da mesma disciplina
+const agruparHorariosConsecutivos = (disciplinas: Disciplina[]) => {
+  const eventosAgrupados: Array<{
+    disciplina: Disciplina;
+    dia: string;
+    horarioInicio: string;
+    horarioFim: string;
+    blocos: number;
+  }> = [];
+
+  // Processa cada disciplina separadamente
+  disciplinas.forEach((disciplina) => {
+    // Agrupa horários por dia para esta disciplina específica
+    const horariosPorDia: { [dia: string]: string[] } = {};
+    
+    // Coleta todos os horários desta disciplina
+    disciplina.horarios.forEach((horario) => {
+      if (horario.horarioInicio) {
+        const dia = horario.dia;
+        if (!horariosPorDia[dia]) {
+          horariosPorDia[dia] = [];
+        }
+        horariosPorDia[dia].push(horario.horarioInicio);
+      }
+    });
+
+    // Para cada dia desta disciplina, cria um único evento
+    Object.entries(horariosPorDia).forEach(([dia, horarios]) => {
+      // Ordena horários cronologicamente
+      horarios.sort((a, b) => {
+        const indexA = HORARIOS_GRADE.indexOf(a);
+        const indexB = HORARIOS_GRADE.indexOf(b);
+        return indexA - indexB;
+      });
+
+      // Como os horários sempre são consecutivos, cria um único evento
+      if (horarios.length > 0) {
+        const horarioInicio = horarios[0];
+        const horarioFim = calcularHorarioFim(horarios[horarios.length - 1]);
+        
+        eventosAgrupados.push({
+          disciplina,
+          dia,
+          horarioInicio,
+          horarioFim,
+          blocos: horarios.length
+        });
+      }
+    });
+  });
+
+  return eventosAgrupados;
+};
+
 // Função para gerar arquivo iCal
 const gerarArquivoICal = (disciplinas: Disciplina[]): string => {
   let icalContent = 'BEGIN:VCALENDAR\r\n';
@@ -70,44 +124,42 @@ const gerarArquivoICal = (disciplinas: Disciplina[]): string => {
   const now = new Date();
   const dtstamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}T${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}Z`;
   
-  disciplinas.forEach((disciplina, index) => {
-    disciplina.horarios.forEach((horario, horarioIndex) => {
-      if (horario.horarioInicio) {
-        // UID único para cada evento
-        const uid = `disciplina-${disciplina.codigo}-${index}-${horarioIndex}-${Date.now()}@horariofacil.com`;
-        const summary = `${disciplina.codigo} - ${disciplina.nome}`;
-        const description = `Professor: ${disciplina.professor}`;
-        
-        // Converter horário para formato iCal
-        const horarioInicio = converterHorarioParaICal(horario.horarioInicio);
-        const horarioFim = converterHorarioParaICal(calcularHorarioFim(horario.horarioInicio));
-        const diaSemana = getDiaSigaaParaICal(horario.dia);
-        
-        // Data de início do evento (primeira ocorrência)
-        const dataEvento = new Date(dataInicio);
-        const diasSemana = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-        const diaIndex = diasSemana.indexOf(diaSemana);
-        if (diaIndex !== -1) {
-          const diasParaAdicionar = (diaIndex - dataEvento.getDay() + 7) % 7;
-          dataEvento.setDate(dataEvento.getDate() + diasParaAdicionar);
-        }
-        
-        // Formato de data/hora com TZID para compatibilidade com Google Calendar
-        const dtstart = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioInicio}00`;
-        const dtend = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioFim}00`;
-        const until = `${dataFim.getFullYear()}${(dataFim.getMonth() + 1).toString().padStart(2, '0')}${dataFim.getDate().toString().padStart(2, '0')}T235959Z`;
-        
-        icalContent += 'BEGIN:VEVENT\r\n';
-        icalContent += `UID:${uid}\r\n`;
-        icalContent += `DTSTAMP:${dtstamp}\r\n`;
-        icalContent += `SUMMARY:${summary}\r\n`;
-        icalContent += `DESCRIPTION:${description}\r\n`;
-        icalContent += `DTSTART;TZID=America/Bahia:${dtstart}\r\n`;
-        icalContent += `DTEND;TZID=America/Bahia:${dtend}\r\n`;
-        icalContent += `RRULE:FREQ=WEEKLY;BYDAY=${diaSemana};UNTIL=${until}\r\n`;
-        icalContent += 'END:VEVENT\r\n';
-      }
-    });
+  // Agrupa horários consecutivos
+  const eventosAgrupados = agruparHorariosConsecutivos(disciplinas);
+  
+  eventosAgrupados.forEach((evento, index) => {
+    const uid = `disciplina-${evento.disciplina.codigo}-${index}-${Date.now()}@horariofacil.com`;
+    const summary = `${evento.disciplina.codigo} - ${evento.disciplina.nome}`;
+    const description = `Professor: ${evento.disciplina.professor}\nBlocos: ${evento.blocos}`;
+    
+    // Converter horário para formato iCal
+    const horarioInicio = converterHorarioParaICal(evento.horarioInicio);
+    const horarioFim = converterHorarioParaICal(evento.horarioFim);
+    const diaSemana = getDiaSigaaParaICal(evento.dia);
+    
+    // Data de início do evento (primeira ocorrência)
+    const dataEvento = new Date(dataInicio);
+    const diasSemana = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+    const diaIndex = diasSemana.indexOf(diaSemana);
+    if (diaIndex !== -1) {
+      const diasParaAdicionar = (diaIndex - dataEvento.getDay() + 7) % 7;
+      dataEvento.setDate(dataEvento.getDate() + diasParaAdicionar);
+    }
+    
+    // Formato de data/hora com TZID para compatibilidade com Google Calendar
+    const dtstart = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioInicio}00`;
+    const dtend = `${dataEvento.getFullYear()}${(dataEvento.getMonth() + 1).toString().padStart(2, '0')}${dataEvento.getDate().toString().padStart(2, '0')}T${horarioFim}00`;
+    const until = `${dataFim.getFullYear()}${(dataFim.getMonth() + 1).toString().padStart(2, '0')}${dataFim.getDate().toString().padStart(2, '0')}T235959Z`;
+    
+    icalContent += 'BEGIN:VEVENT\r\n';
+    icalContent += `UID:${uid}\r\n`;
+    icalContent += `DTSTAMP:${dtstamp}\r\n`;
+    icalContent += `SUMMARY:${summary}\r\n`;
+    icalContent += `DESCRIPTION:${description}\r\n`;
+    icalContent += `DTSTART;TZID=America/Bahia:${dtstart}\r\n`;
+    icalContent += `DTEND;TZID=America/Bahia:${dtend}\r\n`;
+    icalContent += `RRULE:FREQ=WEEKLY;BYDAY=${diaSemana};UNTIL=${until}\r\n`;
+    icalContent += 'END:VEVENT\r\n';
   });
   
   icalContent += 'END:VCALENDAR\r\n';
