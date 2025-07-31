@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-12">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto mb-4 p-3 bg-muted rounded-full w-fit">
@@ -30,7 +30,7 @@ const NotFound = () => {
             </Button>
             
             <Button variant="outline" asChild>
-              <Link to="/conversao">
+              <Link to="/planejador">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Conversão Simples
               </Link>
