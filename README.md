@@ -47,6 +47,7 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 - **Compatibilidade Total**: Exportação para Google Calendar, Outlook e outros calendários
 - **Formato iCalendar (.ics)**: Arquivo padrão compatível com todos os calendários digitais
 - **Eventos Recorrentes**: Configuração automática de repetição semanal
+- **Agrupamento de Horários**: Cria um único evento para as aulas de cada matéria no dia
 - **Informações Completas**: Inclui código da disciplina, nome, professor e horários
 
 ### 💾 Persistência e Sincronização
