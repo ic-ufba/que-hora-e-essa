@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -13,13 +13,28 @@ import {
   Filter,
   Users,
   CheckCircle,
-  History
+  History,
+  AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/components/image/logo.png";
 
 const Home = () => {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [showAvisoModal, setShowAvisoModal] = useState(false);
+
+  // Verifica se é a primeira visita
+  useEffect(() => {
+    const avisoVisto = localStorage.getItem('avisoVisto');
+    if (!avisoVisto) {
+      setShowAvisoModal(true);
+    }
+  }, []);
+
+  const handleFecharAviso = () => {
+    setShowAvisoModal(false);
+    localStorage.setItem('avisoVisto', 'true');
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -173,6 +188,53 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Modal de aviso */}
+      {showAvisoModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleFecharAviso}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
+                <h3 className="text-lg font-bold text-gray-900">ATENÇÃO</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleFecharAviso}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                O <strong>QueHoraÉEssa?</strong> é uma ferramenta independente, criada para auxiliar estudantes no planejamento de horários.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-orange-600 font-bold">•</span>
+                  <p className="text-sm text-gray-700">Não temos vínculo institucional com a UFBA ou com o SIGAA.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-orange-600 font-bold">•</span>
+                  <p className="text-sm text-gray-700">Não operamos, gerenciamos ou decidimos nada sobre o sistema SIGAA.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <p className="text-sm text-gray-700">Nosso objetivo é apenas facilitar a visualização e organização de horários para o seu planejamento acadêmico.</p>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleFecharAviso}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Entendi
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de tutorial */}
       {showTutorialModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowTutorialModal(false)}>
@@ -229,25 +291,25 @@ const Home = () => {
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">6</div>
-                    <div>
+                  <div>
                     <p className="font-medium text-sm">No menu superior, vá em <strong>Ensino &gt; Turmas</strong></p>
-                      </div>
-                    </div>
+                  </div>
+                </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">7</div>
-                    <div>
+                  <div>
                     <p className="font-medium text-sm">Busque pelo <strong>Ano.Período</strong> ou <strong>Código da Disciplina</strong></p>
-                      </div>
-                    </div>
+                  </div>
+                </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">8</div>
                   <div>
                     <p className="font-medium text-sm">Clique em <strong>Buscar</strong></p>
                   </div>
-                      </div>
+                </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">9</div>
-                      <div>
+                  <div>
                     <p className="font-medium text-sm">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                   </div>
                 </div>
@@ -260,8 +322,8 @@ const Home = () => {
                     <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
                     <div>Período/ Ano	Turma	Docente	Vgs Reservadas	Horários</div>
                     <div>2025.2	03	JAIME LEONARDO ORJUELA CHAMORRO	5	24T34 (01/09/2025 - 10/01/2026)</div>
-        </div>
-              </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
