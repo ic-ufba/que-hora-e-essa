@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Disciplina } from "@/utils/sigaaParser";
@@ -6,6 +6,7 @@ import { detectConflicts } from "@/utils/sigaaParser";
 import { Trash2, AlertTriangle, Clock, User, BookOpen, Calendar, ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import { Switch } from "@/components/ui/switch";
+import { HORARIOS_BLOCOS } from "@/types/schedule";
 
 interface GradeHorariaProps {
   disciplinas: Disciplina[];
@@ -20,13 +21,6 @@ const HORARIOS_GRADE = [
 ];
 
 const DIAS_SEMANA = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
-
-// Mapeamento de horários para blocos do SIGAA (baseado na tabela UFBA)
-const HORARIO_PARA_BLOCO: { [key: string]: string } = {
-  '07:00': 'M1', '07:55': 'M2', '08:50': 'M3', '09:45': 'M4', '10:40': 'M5', '11:35': 'M6',
-  '13:00': 'T1', '13:55': 'T2', '14:50': 'T3', '15:45': 'T4', '16:40': 'T5', '17:35': 'T6',
-  '18:30': 'N1', '19:25': 'N2', '20:20': 'N3', '21:15': 'N4'
-};
 
 // Função para converter dia do SIGAA para formato iCal
 const getDiaSigaaParaICal = (dia: string): string => {
@@ -275,7 +269,7 @@ export const GradeHoraria = ({ disciplinas, onRemoverDisciplina, compact = false
                 const [dia, bloco] = key.split('-');
                 return (
                     <div key={key} className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-medium text-red-700 text-xs">{dia} {bloco}:</span>
+                      <span className="font-medium text-red-700 text-xs">{dia} {bloco} ({HORARIOS_BLOCOS[bloco]}):</span>
                       {disciplinasCodigos.map((codigo) => {
                         const disciplina = disciplinas.find(d => d.codigo === codigo);
                         if (!disciplina) return null;
