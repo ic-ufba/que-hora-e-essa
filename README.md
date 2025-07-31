@@ -8,7 +8,7 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 
 ## 🏢 Sobre o Projeto
 - **Iniciativa**: IdeaLab.ic - Laboratório de Ideias do Instituto de Computação da UFBA
-- **Desenvolvedora**: Eduarda Almeida
+- **Criadora e Desenvolvedora**: Eduarda Almeida
 - **LinkedIn**: [Eduarda Almeida](https://www.linkedin.com/in/eduarda-s-almeida)
 - **Status**: Projeto ativo e em desenvolvimento
 
