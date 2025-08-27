@@ -11,7 +11,9 @@ import {
   Users,
   CheckCircle,
   History,
-  AlertTriangle
+  AlertTriangle,
+  Minimize,
+  Maximize
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/components/image/logo.png";
@@ -483,7 +485,7 @@ const Home = () => {
       {showConversaoRapida && (
         isMobile ? (
           <Drawer open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
-            <DrawerContent className="max-h-[80vh] mt-8">
+            <DrawerContent className="max-h-[80vh] mt-8 rounded-t-lg">
               <DrawerHeader>
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5" />
@@ -640,7 +642,7 @@ const Home = () => {
                           <div className="text-center font-medium text-gray-600 p-1 text-xs">Seg</div>
                           <div className="text-center font-medium text-gray-600 p-1 text-xs">Ter</div>
                           <div className="text-center font-medium text-gray-600 p-1 text-xs">Qua</div>
-                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Qui</div>
+                          <div className="text-center font-medium text-xs">Qui</div>
                           <div className="text-center font-medium text-gray-600 p-1 text-xs">Sex</div>
                           <div className="text-center font-medium text-gray-600 p-1 text-xs">Sáb</div>
                           
@@ -670,7 +672,7 @@ const Home = () => {
           </Drawer>
         ) : (
           <Dialog open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
-            <DialogContent className="w-[90vw] max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="w-[90vw] max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg">
               <DialogHeader>
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5" />
