@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Calculator, 
@@ -15,10 +15,21 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/components/image/logo.png";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { parseHorarios } from "@/utils/sigaaParser";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const Home = () => {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [showAvisoModal, setShowAvisoModal] = useState(false);
+  const [showConversaoRapida, setShowConversaoRapida] = useState(false);
+  const [codigosTexto, setCodigosTexto] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mostrarGrade, setMostrarGrade] = useState(false);
 
   // Verifica se é a primeira visita
   useEffect(() => {
@@ -28,10 +39,105 @@ const Home = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const handleFecharAviso = () => {
     setShowAvisoModal(false);
     localStorage.setItem('avisoVisto', 'true');
   };
+
+  // Parser de códigos soltos: aceita separadores espaço, vírgula e barra
+  // Exemplos: "24N12 4T12 7N34 246M1234"
+  const codigosNormalizados = useMemo(() => {
+    const texto = codigosTexto
+      .replace(/\n/g, " ")
+      .replace(/\s*\/\s*/g, " ")
+      .trim();
+    if (!texto) return [] as string[];
+    return texto
+      .split(/\s+/)
+      .map((s) => s.trim())
+      .filter((s) => /\d+[MTNmtn]\d+/.test(s));
+  }, [codigosTexto]);
+
+  type ItemResultado = {
+    codigo: string;
+    linhas: { dia: string; faixa: string }[];
+    valido: boolean;
+  };
+
+  const resultados = useMemo<ItemResultado[]>(() => {
+    return codigosNormalizados.map((codigo) => {
+      // Normaliza para maiúsculas para o parser
+      const codigoNormalizado = codigo.toUpperCase();
+      const horarios = parseHorarios(codigoNormalizado);
+      
+      // Valida formato: dias 2-7, turnos M/T/N, horários válidos
+      const match = codigo.match(/^(\d+)([MTNmtn])(\d+)$/);
+      let valido = false;
+      
+      if (match) {
+        const [, dias, turno, blocos] = match;
+        const turnoUpper = turno.toUpperCase();
+        
+        // Valida dias (2-7)
+        const diasValidos = dias.split('').every(d => /^[2-7]$/.test(d));
+        
+        // Valida turno (M, T, N)
+        const turnoValido = /^[MTN]$/.test(turnoUpper);
+        
+        // Valida blocos de horário baseado no turno
+        let blocosValidos = false;
+        if (turnoUpper === 'M') {
+          blocosValidos = blocos.split('').every(b => /^[1-6]$/.test(b));
+        } else if (turnoUpper === 'T') {
+          blocosValidos = blocos.split('').every(b => /^[1-6]$/.test(b));
+        } else if (turnoUpper === 'N') {
+          blocosValidos = blocos.split('').every(b => /^[1-4]$/.test(b));
+        }
+        
+        valido = diasValidos && turnoValido && blocosValidos;
+      }
+      
+      const linhas = horarios.map((h) => ({
+        dia: h.dia,
+        faixa: `${h.horarioInicio} às ${h.horarioFim}`,
+      }));
+      return { codigo, linhas, valido };
+    });
+  }, [codigosNormalizados]);
+
+  // Organiza horários por dia da semana para a mini grade
+  const horariosPorDia = useMemo(() => {
+    const dias = {
+      'Segunda': [],
+      'Terça': [],
+      'Quarta': [],
+      'Quinta': [],
+      'Sexta': [],
+      'Sábado': []
+    };
+    
+    resultados.forEach(res => {
+      if (res.valido) {
+        res.linhas.forEach(horario => {
+          if (dias[horario.dia]) {
+            dias[horario.dia].push({
+              codigo: res.codigo,
+              horario: horario.faixa
+            });
+          }
+        });
+      }
+    });
+    
+    return dias;
+  }, [resultados]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -56,6 +162,14 @@ const Home = () => {
               Começar a Planejar
             </Button>
           </Link>
+          <Button 
+            size="lg"
+            onClick={() => setShowConversaoRapida(true)}
+            className="px-8 py-3 text-lg w-full sm:w-auto bg-slate-700 hover:bg-slate-800 text-white"
+          >
+            <Calculator className="w-5 h-5 mr-2" />
+            Conversão Rápida
+          </Button>
           <Button 
             size="lg"
             variant="outline"
@@ -151,22 +265,32 @@ const Home = () => {
       {/* Recursos do sistema */}
       <section className="max-w-4xl mx-auto px-4 md:px-0 mb-12">
         <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Recursos do Sistema</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Conversão e Processamento */}
+          <div className="text-center">
+            <Calculator className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Conversão Rápida</h3>
+            <p className="text-sm text-gray-600">Converta múltiplos códigos simultaneamente com validação automática</p>
+          </div>
           <div className="text-center">
             <Clock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">Conversão Inteligente</h3>
-            <p className="text-sm text-gray-600">Converte automaticamente códigos do SIGAA em horários legíveis e organizados</p>
+            <p className="text-sm text-gray-600">Converte automaticamente códigos do SIGAA em horários legíveis</p>
           </div>
+          
+          {/* Organização e Filtros */}
           <div className="text-center">
             <Filter className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">Filtros Avançados</h3>
             <p className="text-sm text-gray-600">Filtre disciplinas por dia, horário e restrições personalizadas</p>
           </div>
           <div className="text-center">
-            <Download className="w-12 h-12 text-green-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Exportação</h3>
-            <p className="text-sm text-gray-600">Exporte sua grade para calendários digitais (Google Calendar, Outlook, etc.)</p>
+            <Users className="w-12 h-12 text-teal-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Detecção de Conflitos</h3>
+            <p className="text-sm text-gray-600">Identifique automaticamente conflitos de horários entre disciplinas</p>
           </div>
+          
+          {/* Persistência e Histórico */}
           <div className="text-center">
             <History className="w-12 h-12 text-purple-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">Histórico de Cursos</h3>
@@ -177,10 +301,17 @@ const Home = () => {
             <h3 className="font-semibold text-gray-900 mb-2">Salvar Grades</h3>
             <p className="text-sm text-gray-600">Salve e carregue suas grades personalizadas com nomes customizados</p>
           </div>
+          
+          {/* Exportação e Integração */}
           <div className="text-center">
-            <Users className="w-12 h-12 text-teal-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Detecção de Conflitos</h3>
-            <p className="text-sm text-gray-600">Identifique automaticamente conflitos de horários entre disciplinas</p>
+            <Download className="w-12 h-12 text-green-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Exportação</h3>
+            <p className="text-sm text-gray-600">Exporte sua grade para calendários digitais (Google Calendar, Outlook, etc.)</p>
+          </div>
+          <div className="text-center">
+            <Calendar className="w-12 h-12 text-red-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Grade Visual</h3>
+            <p className="text-sm text-gray-600">Visualize sua grade semanal em formato de calendário interativo</p>
           </div>
         </div>
       </section>
@@ -325,6 +456,387 @@ const Home = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Conversão Rápida - Modal Desktop / Drawer Mobile */}
+      {showConversaoRapida && (
+        isMobile ? (
+          <Drawer open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
+            <DrawerContent className="max-h-[85vh]">
+              <DrawerHeader>
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5" />
+                  <h3 className="text-lg font-bold">Conversão Rápida</h3>
+                </div>
+              </DrawerHeader>
+              <div className="p-4 space-y-4 overflow-y-auto">
+                <Input
+                  placeholder="Ex.: 24N12 4T12 7N34 246M1234"
+                  value={codigosTexto}
+                  onChange={(e) => setCodigosTexto(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <div className="flex-1"></div>
+                  <Button variant="outline" size="sm" onClick={() => setCodigosTexto("")}>Limpar</Button>
+                </div>
+                <Separator />
+                {/* Explicação só aparece quando não há resultados */}
+                {resultados.length === 0 && (
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="explicacao">
+                      <AccordionTrigger className="text-sm text-gray-500 hover:text-gray-700">
+                        Como funciona a conversão?
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <Card>
+                          <CardContent className="p-4 space-y-2 text-sm">
+                            <p className="text-gray-700">Explicação do código:</p>
+                            <p className="font-mono">24N12 → 2 e 4 / N / 1 e 2</p>
+                            <p>Ordem: <strong>Dias da semana</strong> / <strong>Turno</strong> / <strong>Horários</strong></p>
+                            <div className="grid grid-cols-1 gap-3">
+                              <div>
+                                <div className="font-medium">Dias</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>2 - Segunda</li>
+                                  <li>3 - Terça</li>
+                                  <li>4 - Quarta</li>
+                                  <li>5 - Quinta</li>
+                                  <li>6 - Sexta</li>
+                                  <li>7 - Sábado</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="font-medium">Turnos</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>M - Manhã</li>
+                                  <li>T - Tarde</li>
+                                  <li>N - Noite</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="font-medium">Horários Manhã</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>1 - 07:00</li>
+                                  <li>2 - 07:55</li>
+                                  <li>3 - 08:50</li>
+                                  <li>4 - 09:45</li>
+                                  <li>5 - 10:40</li>
+                                  <li>6 - 11:35</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="font-medium">Horários Tarde</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>1 - 13:00</li>
+                                  <li>2 - 13:55</li>
+                                  <li>3 - 14:50</li>
+                                  <li>4 - 15:45</li>
+                                  <li>5 - 16:40</li>
+                                  <li>6 - 17:35</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="font-medium">Horários Noite</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>1 - 18:30</li>
+                                  <li>2 - 19:25</li>
+                                  <li>3 - 20:20</li>
+                                  <li>4 - 21:15</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+                <div className="space-y-3">
+                  {resultados.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Digite um ou mais códigos para ver a conversão.</p>
+                  )}
+                  {resultados.map((res) => (
+                    <Card key={res.codigo} className="shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-mono text-lg font-semibold text-gray-800 bg-gray-100 px-3 py-1 rounded-md">
+                            {res.codigo}
+                          </div>
+                          {!res.valido && (
+                            <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full border border-red-200">
+                              Formato inválido
+                            </span>
+                          )}
+                        </div>
+                        {res.valido && res.linhas.length > 0 ? (
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium text-gray-600 border-b border-gray-200 pb-2">
+                              Horários:
+                            </div>
+                            <ul className="space-y-2">
+                              {res.linhas.map((l, idx) => (
+                                <li key={idx} className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span className="text-sm text-gray-700 font-medium">{l.dia}</span>
+                                  <span className="text-sm text-gray-500">—</span>
+                                  <span className="text-sm text-blue-700 font-mono">{l.faixa}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="text-sm text-red-700">
+                              {!res.valido ? "Formato inválido: verifique dias (2-7), turnos (M/T/N) e horários válidos." : "Código inválido."}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {/* Botão para mostrar/ocultar a mini grade */}
+                  {resultados.some(r => r.valido) && (
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMostrarGrade(!mostrarGrade)}
+                        className="w-full"
+                      >
+                        {mostrarGrade ? 'Ocultar Grade' : 'Visualizar Grade'}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Mini Grade Semanal */}
+                  {mostrarGrade && resultados.some(r => r.valido) && (
+                    <Card>
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-sm mb-3 text-center">Grade Semanal</h4>
+                        <div className="grid grid-cols-6 gap-1 text-xs">
+                          {/* Cabeçalho dos dias */}
+                          <div className="text-center font-medium text-gray-600 p-1">Seg</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Ter</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Qua</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Qui</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Sex</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Sáb</div>
+                          
+                          {/* Quadrinhos dos horários */}
+                          {Object.entries(horariosPorDia).map(([dia, horarios]) => (
+                            <div key={dia} className="min-h-[60px] border rounded p-1 bg-gray-50">
+                              {horarios.length > 0 ? (
+                                <div className="space-y-1">
+                                  {horarios.map((h, idx) => (
+                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[10px] leading-tight">
+                                      <div className="text-blue-700">{h.horario}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-gray-400 text-center text-[10px] leading-tight pt-2">-</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Dialog open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
+            <DialogContent className="w-[90vw] max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5" />
+                  <h3 className="text-lg font-bold">Conversão Rápida</h3>
+                </div>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Ex.: 24N12 4T12 7N34 246M1234"
+                  value={codigosTexto}
+                  onChange={(e) => setCodigosTexto(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <div className="flex-1"></div>
+                  <Button variant="outline" size="sm" onClick={() => setCodigosTexto("")}>Limpar</Button>
+                </div>
+                <Separator />
+                {/* Explicação só aparece quando não há resultados */}
+                {resultados.length === 0 && (
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="explicacao">
+                      <AccordionTrigger className="text-sm text-gray-500 hover:text-gray-700">
+                        Como funciona a conversão?
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <Card>
+                          <CardContent className="p-4 space-y-2 text-sm">
+                            <p className="text-gray-700">Explicação do código:</p>
+                            <p className="font-mono">24N12 → 2 e 4 / N / 1 e 2</p>
+                            <p>Ordem: <strong>Dias da semana</strong> / <strong>Turno</strong> / <strong>Horários</strong></p>
+                            <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
+                              <div>
+                                <div className="font-medium">Dias</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>2 - Segunda</li>
+                                  <li>3 - Terça</li>
+                                  <li>4 - Quarta</li>
+                                  <li>5 - Quinta</li>
+                                  <li>6 - Sexta</li>
+                                  <li>7 - Sábado</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="font-medium">Turnos</div>
+                                <ul className="list-disc pl-5 text-gray-700">
+                                  <li>M - Manhã</li>
+                                  <li>T - Tarde</li>
+                                  <li>N - Noite</li>
+                                </ul>
+                              </div>
+                              <div className="space-y-3">
+                                <div>
+                                  <div className="font-medium">Horários Manhã</div>
+                                  <ul className="list-disc pl-5 text-gray-700">
+                                    <li>1 - 07:00</li>
+                                    <li>2 - 07:55</li>
+                                    <li>3 - 08:50</li>
+                                    <li>4 - 09:45</li>
+                                    <li>5 - 10:40</li>
+                                    <li>6 - 11:35</li>
+                                  </ul>
+                                </div>
+                                <div>
+                                  <div className="font-medium">Horários Tarde</div>
+                                  <ul className="list-disc pl-5 text-gray-700">
+                                    <li>1 - 13:00</li>
+                                    <li>2 - 13:55</li>
+                                    <li>3 - 14:50</li>
+                                    <li>4 - 15:45</li>
+                                    <li>5 - 16:40</li>
+                                    <li>6 - 17:35</li>
+                                  </ul>
+                                </div>
+                                <div>
+                                  <div className="font-medium">Horários Noite</div>
+                                  <ul className="list-disc pl-5 text-gray-700">
+                                    <li>1 - 18:30</li>
+                                    <li>2 - 19:25</li>
+                                    <li>3 - 20:20</li>
+                                    <li>4 - 21:15</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+                <div className="space-y-3">
+                  {resultados.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Digite um ou mais códigos para ver a conversão.</p>
+                  )}
+                  {resultados.map((res) => (
+                    <Card key={res.codigo} className="shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-mono text-lg font-semibold text-gray-800 bg-gray-100 px-3 py-1 rounded-md">
+                            {res.codigo}
+                          </div>
+                          {!res.valido && (
+                            <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full border border-red-200">
+                              Formato inválido
+                            </span>
+                          )}
+                        </div>
+                        {res.valido && res.linhas.length > 0 ? (
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium text-gray-600 border-b border-gray-200 pb-2">
+                              Horários:
+                            </div>
+                            <ul className="space-y-2">
+                              {res.linhas.map((l, idx) => (
+                                <li key={idx} className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span className="text-sm text-gray-700 font-medium">{l.dia}</span>
+                                  <span className="text-sm text-gray-500">—</span>
+                                  <span className="text-sm text-blue-700 font-mono">{l.faixa}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="text-sm text-red-700">
+                              {!res.valido ? "Formato inválido: verifique dias (2-7), turnos (M/T/N) e horários válidos." : "Código inválido."}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {/* Botão para mostrar/ocultar a mini grade */}
+                  {resultados.some(r => r.valido) && (
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMostrarGrade(!mostrarGrade)}
+                        className="w-full"
+                      >
+                        {mostrarGrade ? 'Ocultar Grade' : 'Visualizar Grade'}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Mini Grade Semanal */}
+                  {mostrarGrade && resultados.some(r => r.valido) && (
+                    <Card>
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-sm mb-3 text-center">Grade Semanal</h4>
+                        <div className="grid grid-cols-6 gap-1 text-xs">
+                          {/* Cabeçalho dos dias */}
+                          <div className="text-center font-medium text-gray-600 p-1">Seg</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Ter</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Qua</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Qui</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Sex</div>
+                          <div className="text-center font-medium text-gray-600 p-1">Sáb</div>
+                          
+                          {/* Quadrinhos dos horários */}
+                          {Object.entries(horariosPorDia).map(([dia, horarios]) => (
+                            <div key={dia} className="min-h-[60px] border rounded p-1 bg-gray-50">
+                              {horarios.length > 0 ? (
+                                <div className="space-y-1">
+                                  {horarios.map((h, idx) => (
+                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[10px] leading-tight">
+                                      <div className="text-blue-700">{h.horario}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-gray-400 text-center text-[10px] leading-tight pt-2">-</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
       )}
     </div>
   );

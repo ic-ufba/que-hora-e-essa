@@ -17,6 +17,7 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 ## 🚀 Funcionalidades Principais
 
 ### 📋 Conversão e Planejamento
+- **Conversão Rápida**: Converta múltiplos códigos de horário simultaneamente (ex: "24N12 4T12 7N34") com validação automática e visualização em grade semanal
 - **Conversão Individual**: Converta uma disciplina específica do SIGAA em horários legíveis e organizados
 - **Planejamento Completo**: Organize todas as disciplinas do semestre e visualize conflitos
 - **Grade Horária Visual**: Visualize sua grade semanal em um planner colorido e interativo
@@ -103,6 +104,32 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 4. Vá em **Ensino > Turmas**
 5. Busque pelo período ou código da disciplina
 6. Copie todo o bloco de informações da disciplina
+
+### ⚡ Conversão Rápida
+
+A **Conversão Rápida** permite converter múltiplos códigos de horário simultaneamente:
+
+#### Formato dos Códigos
+- **Estrutura**: `Dias + Turno + Horários`
+- **Exemplo**: `24N12` significa:
+  - `2,4` = Segunda e Quarta
+  - `N` = Noite
+  - `1,2` = Horários 1 e 2 (18:30 às 19:25 e 19:25 às 20:20)
+
+#### Como Usar
+1. Clique em "Conversão Rápida" na página inicial
+2. Digite os códigos separados por espaços: `24N12 4T12 7N34`
+3. A conversão é automática e mostra:
+   - Horários legíveis para cada código
+   - Validação de formato (dias 2-7, turnos M/T/N, horários válidos)
+   - Grade semanal visual organizada por dia
+4. Use o botão "Visualizar Grade" para ver a distribuição semanal
+
+#### Validação Automática
+- **Dias**: Apenas 2-7 (Segunda a Sábado)
+- **Turnos**: M (Manhã), T (Tarde), N (Noite)
+- **Horários**: 1-6 para M/T, 1-4 para N
+- **Formato inválido**: Badge vermelho e mensagem explicativa
 
 ### 📝 Formato de Entrada Esperado
 
