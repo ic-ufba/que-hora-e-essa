@@ -651,11 +651,26 @@ const Home = () => {
                             <div key={dia} className="min-h-[50px] border rounded p-1 bg-gray-50">
                               {horarios.length > 0 ? (
                                 <div className="space-y-0.5">
-                                  {horarios.map((h, idx) => (
-                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[9px] leading-tight">
-                                      <div className="text-blue-700">{h.horario}</div>
-                                    </div>
-                                  ))}
+                                  {horarios.map((h, idx) => {
+                                    // Verifica se este horário específico tem conflito com outros no mesmo dia
+                                    const temConflito = horarios.some((outroHorario, outroIdx) => 
+                                      idx !== outroIdx && h.horario === outroHorario.horario
+                                    );
+                                    return (
+                                      <div 
+                                        key={idx} 
+                                        className={`p-1 rounded text-[9px] leading-tight ${
+                                          temConflito 
+                                            ? 'bg-red-100 border border-red-300' 
+                                            : 'bg-blue-100'
+                                        }`}
+                                      >
+                                        <div className={temConflito ? 'text-red-700' : 'text-blue-700'}>
+                                          {h.horario}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               ) : (
                                 <div className="text-gray-400 text-center text-[9px] leading-tight pt-1">-</div>
@@ -663,6 +678,21 @@ const Home = () => {
                             </div>
                           ))}
                         </div>
+                        {/* Legenda dos conflitos */}
+                        {Object.values(horariosPorDia).some(horarios => 
+                          horarios.some((h, idx) => 
+                            horarios.some((outro, outroIdx) => 
+                              idx !== outroIdx && h.horario === outro.horario
+                            )
+                          )
+                        ) && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-center gap-2 text-xs text-red-700">
+                              <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                              <span>Conflito de horários detectado</span>
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}
@@ -840,11 +870,26 @@ const Home = () => {
                             <div key={dia} className="min-h-[60px] border rounded p-1 bg-gray-50">
                               {horarios.length > 0 ? (
                                 <div className="space-y-1">
-                                  {horarios.map((h, idx) => (
-                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[10px] leading-tight">
-                                      <div className="text-blue-700">{h.horario}</div>
-                                    </div>
-                                  ))}
+                                  {horarios.map((h, idx) => {
+                                    // Verifica se este horário específico tem conflito com outros no mesmo dia
+                                    const temConflito = horarios.some((outroHorario, outroIdx) => 
+                                      idx !== outroIdx && h.horario === outroHorario.horario
+                                    );
+                                    return (
+                                      <div 
+                                        key={idx} 
+                                        className={`p-1 rounded text-[10px] leading-tight ${
+                                          temConflito 
+                                            ? 'bg-red-100 border border-red-300' 
+                                            : 'bg-blue-100'
+                                        }`}
+                                      >
+                                        <div className={temConflito ? 'text-red-700' : 'text-blue-700'}>
+                                          {h.horario}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               ) : (
                                 <div className="text-gray-400 text-center text-[10px] leading-tight pt-2">-</div>
@@ -852,6 +897,21 @@ const Home = () => {
                             </div>
                           ))}
                         </div>
+                        {/* Legenda dos conflitos */}
+                        {Object.values(horariosPorDia).some(horarios => 
+                          horarios.some((h, idx) => 
+                            horarios.some((outro, outroIdx) => 
+                              idx !== outroIdx && h.horario === outro.horario
+                            )
+                          )
+                        ) && (
+                          <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-center gap-2 text-xs text-red-700">
+                              <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                              <span>Conflito de horários detectado</span>
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}
