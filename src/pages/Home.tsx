@@ -484,15 +484,15 @@ const Home = () => {
       {/* Conversão Rápida - Modal Desktop / Drawer Mobile */}
       {showConversaoRapida && (
         isMobile ? (
-          <Drawer open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
-            <DrawerContent className="max-h-[80vh] mt-8 rounded-t-lg">
-              <DrawerHeader>
+          <Dialog open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
+            <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto rounded-lg">
+              <DialogHeader>
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5" />
                   <h3 className="text-lg font-bold">Conversão Rápida</h3>
                 </div>
-              </DrawerHeader>
-              <div className="p-4 space-y-3 overflow-y-auto">
+              </DialogHeader>
+              <div className="space-y-3">
                 <Input
                   placeholder="Ex.: 24N12 4T12 7N34 246M1234"
                   value={codigosTexto}
@@ -668,8 +668,8 @@ const Home = () => {
                   )}
                 </div>
               </div>
-            </DrawerContent>
-          </Drawer>
+            </DialogContent>
+          </Dialog>
         ) : (
           <Dialog open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
             <DialogContent className="w-[90vw] max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg">
