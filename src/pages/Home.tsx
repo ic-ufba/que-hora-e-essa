@@ -129,11 +129,32 @@ const Home = () => {
           if (dias[horario.dia]) {
             dias[horario.dia].push({
               codigo: res.codigo,
-              horario: horario.faixa
+              horario: horario.faixa,
+              // Extrai turno e número do horário para ordenação
+              turno: horario.faixa.includes('07:') || horario.faixa.includes('08:') || horario.faixa.includes('09:') || horario.faixa.includes('10:') || horario.faixa.includes('11:') ? 'M' :
+                     horario.faixa.includes('13:') || horario.faixa.includes('14:') || horario.faixa.includes('15:') || horario.faixa.includes('16:') || horario.faixa.includes('17:') ? 'T' : 'N',
+              numeroHorario: parseInt(horario.faixa.match(/(\d{1,2}):/)?.[1] || '0')
             });
           }
         });
       }
+    });
+    
+    // Ordena os horários de cada dia: M (manhã) → T (tarde) → N (noite), e depois por horário
+    Object.keys(dias).forEach(dia => {
+      dias[dia].sort((a, b) => {
+        // Primeiro ordena por turno: M (0) → T (1) → N (2)
+        const turnoOrder = { 'M': 0, 'T': 1, 'N': 2 };
+        const turnoDiff = turnoOrder[a.turno] - turnoOrder[b.turno];
+        
+        if (turnoDiff !== 0) return turnoDiff;
+        
+        // Se o turno for o mesmo, ordena por horário (menor para maior)
+        return a.numeroHorario - b.numeroHorario;
+      });
+      
+      // Remove as propriedades de ordenação, mantendo apenas o necessário para a grade
+      dias[dia] = dias[dia].map(({ codigo, horario }) => ({ codigo, horario }));
     });
     
     return dias;
