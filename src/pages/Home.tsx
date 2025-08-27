@@ -483,14 +483,14 @@ const Home = () => {
       {showConversaoRapida && (
         isMobile ? (
           <Drawer open={showConversaoRapida} onOpenChange={setShowConversaoRapida}>
-            <DrawerContent className="max-h-[85vh]">
+            <DrawerContent className="max-h-[80vh] mt-8">
               <DrawerHeader>
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5" />
                   <h3 className="text-lg font-bold">Conversão Rápida</h3>
                 </div>
               </DrawerHeader>
-              <div className="p-4 space-y-4 overflow-y-auto">
+              <div className="p-4 space-y-3 overflow-y-auto">
                 <Input
                   placeholder="Ex.: 24N12 4T12 7N34 246M1234"
                   value={codigosTexto}
@@ -510,14 +510,14 @@ const Home = () => {
                       </AccordionTrigger>
                       <AccordionContent>
                         <Card>
-                          <CardContent className="p-4 space-y-2 text-sm">
+                          <CardContent className="p-3 space-y-2 text-sm">
                             <p className="text-gray-700">Explicação do código:</p>
                             <p className="font-mono">24N12 → 2 e 4 / N / 1 e 2</p>
                             <p>Ordem: <strong>Dias da semana</strong> / <strong>Turno</strong> / <strong>Horários</strong></p>
-                            <div className="grid grid-cols-1 gap-3">
+                            <div className="grid grid-cols-1 gap-2">
                               <div>
                                 <div className="font-medium">Dias</div>
-                                <ul className="list-disc pl-5 text-gray-700">
+                                <ul className="list-disc pl-4 text-gray-700 text-xs">
                                   <li>2 - Segunda</li>
                                   <li>3 - Terça</li>
                                   <li>4 - Quarta</li>
@@ -528,7 +528,7 @@ const Home = () => {
                               </div>
                               <div>
                                 <div className="font-medium">Turnos</div>
-                                <ul className="list-disc pl-5 text-gray-700">
+                                <ul className="list-disc pl-4 text-gray-700 text-xs">
                                   <li>M - Manhã</li>
                                   <li>T - Tarde</li>
                                   <li>N - Noite</li>
@@ -536,7 +536,7 @@ const Home = () => {
                               </div>
                               <div>
                                 <div className="font-medium">Horários Manhã</div>
-                                <ul className="list-disc pl-5 text-gray-700">
+                                <ul className="list-disc pl-4 text-gray-700 text-xs">
                                   <li>1 - 07:00</li>
                                   <li>2 - 07:55</li>
                                   <li>3 - 08:50</li>
@@ -547,7 +547,7 @@ const Home = () => {
                               </div>
                               <div>
                                 <div className="font-medium">Horários Tarde</div>
-                                <ul className="list-disc pl-5 text-gray-700">
+                                <ul className="list-disc pl-4 text-gray-700 text-xs">
                                   <li>1 - 13:00</li>
                                   <li>2 - 13:55</li>
                                   <li>3 - 14:50</li>
@@ -558,7 +558,7 @@ const Home = () => {
                               </div>
                               <div>
                                 <div className="font-medium">Horários Noite</div>
-                                <ul className="list-disc pl-5 text-gray-700">
+                                <ul className="list-disc pl-4 text-gray-700 text-xs">
                                   <li>1 - 18:30</li>
                                   <li>2 - 19:25</li>
                                   <li>3 - 20:20</li>
@@ -572,42 +572,42 @@ const Home = () => {
                     </AccordionItem>
                   </Accordion>
                 )}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {resultados.length === 0 && (
                     <p className="text-sm text-muted-foreground">Digite um ou mais códigos para ver a conversão.</p>
                   )}
                   {resultados.map((res) => (
                     <Card key={res.codigo} className="shadow-sm hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 space-y-3">
+                      <CardContent className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="font-mono text-lg font-semibold text-gray-800 bg-gray-100 px-3 py-1 rounded-md">
+                          <div className="font-mono text-base font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded-md">
                             {res.codigo}
                           </div>
                           {!res.valido && (
-                            <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full border border-red-200">
+                            <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full border border-red-200">
                               Formato inválido
                             </span>
                           )}
                         </div>
                         {res.valido && res.linhas.length > 0 ? (
-                          <div className="space-y-2">
-                            <div className="text-sm font-medium text-gray-600 border-b border-gray-200 pb-2">
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-gray-600 border-b border-gray-200 pb-1">
                               Horários:
                             </div>
-                            <ul className="space-y-2">
+                            <ul className="space-y-1">
                               {res.linhas.map((l, idx) => (
-                                <li key={idx} className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  <span className="text-sm text-gray-700 font-medium">{l.dia}</span>
-                                  <span className="text-sm text-gray-500">—</span>
-                                  <span className="text-sm text-blue-700 font-mono">{l.faixa}</span>
+                                <li key={idx} className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                  <span className="text-xs text-gray-700 font-medium">{l.dia}</span>
+                                  <span className="text-xs text-gray-500">—</span>
+                                  <span className="text-xs text-blue-700 font-mono">{l.faixa}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
                         ) : (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                            <p className="text-sm text-red-700">
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+                            <p className="text-xs text-red-700">
                               {!res.valido ? "Formato inválido: verifique dias (2-7), turnos (M/T/N) e horários válidos." : "Código inválido."}
                             </p>
                           </div>
@@ -618,7 +618,7 @@ const Home = () => {
                   
                   {/* Botão para mostrar/ocultar a mini grade */}
                   {resultados.some(r => r.valido) && (
-                    <div className="pt-2">
+                    <div className="pt-1">
                       <Button
                         variant="outline"
                         size="sm"
@@ -633,30 +633,30 @@ const Home = () => {
                   {/* Mini Grade Semanal */}
                   {mostrarGrade && resultados.some(r => r.valido) && (
                     <Card>
-                      <CardContent className="p-4">
-                        <h4 className="font-semibold text-sm mb-3 text-center">Grade Semanal</h4>
+                      <CardContent className="p-3">
+                        <h4 className="font-semibold text-sm mb-2 text-center">Grade Semanal</h4>
                         <div className="grid grid-cols-6 gap-1 text-xs">
                           {/* Cabeçalho dos dias */}
-                          <div className="text-center font-medium text-gray-600 p-1">Seg</div>
-                          <div className="text-center font-medium text-gray-600 p-1">Ter</div>
-                          <div className="text-center font-medium text-gray-600 p-1">Qua</div>
-                          <div className="text-center font-medium text-gray-600 p-1">Qui</div>
-                          <div className="text-center font-medium text-gray-600 p-1">Sex</div>
-                          <div className="text-center font-medium text-gray-600 p-1">Sáb</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Seg</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Ter</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Qua</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Qui</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Sex</div>
+                          <div className="text-center font-medium text-gray-600 p-1 text-xs">Sáb</div>
                           
                           {/* Quadrinhos dos horários */}
                           {Object.entries(horariosPorDia).map(([dia, horarios]) => (
-                            <div key={dia} className="min-h-[60px] border rounded p-1 bg-gray-50">
+                            <div key={dia} className="min-h-[50px] border rounded p-1 bg-gray-50">
                               {horarios.length > 0 ? (
-                                <div className="space-y-1">
+                                <div className="space-y-0.5">
                                   {horarios.map((h, idx) => (
-                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[10px] leading-tight">
+                                    <div key={idx} className="bg-blue-100 p-1 rounded text-[9px] leading-tight">
                                       <div className="text-blue-700">{h.horario}</div>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <div className="text-gray-400 text-center text-[10px] leading-tight pt-2">-</div>
+                                <div className="text-gray-400 text-center text-[9px] leading-tight pt-1">-</div>
                               )}
                             </div>
                           ))}
