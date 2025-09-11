@@ -286,3 +286,210 @@ export function detectConflicts(disciplinas: Disciplina[]): { [key: string]: str
   
   return conflicts;
 }
+
+// Função para extrair reservas de vagas por curso a partir do texto do SIGAA
+export interface ReservaCurso {
+  curso: string;
+  modalidade: string;
+  tipo: string;
+  quantidade: number;
+}
+
+export interface AlocacaoTurma {
+  codigo: string;
+  nome: string;
+  turma: string;
+  periodo: string;
+  docente: string;
+  horarios: string;
+  matriculados: number;
+  capacidade: number;
+  vagasDisponiveis: number;
+  reservas: ReservaCurso[];
+}
+
+/**
+ * Extrai as reservas de vagas por curso do texto do SIGAA.
+ * Retorna apenas turmas que ainda têm vagas disponíveis (matriculados < capacidade).
+ */
+export function parseReservasPorCurso(text: string): AlocacaoTurma[] {
+  const linhas = text.split(/\r?\n/);
+  const resultado: AlocacaoTurma[] = [];
+  let disciplinaAtual: { codigo: string; nome: string } | null = null;
+  let periodo = '';
+  let turma = '';
+  let docente = '';
+  let matriculados = 0;
+  let capacidade = 0;
+  let reservas: ReservaCurso[] = [];
+  let linhaReserva = '';
+  let horariosStr = '';
+  let aguardandoCabecalho = false;
+
+  for (let i = 0; i < linhas.length; i++) {
+    const rawLine = linhas[i];
+    const linha = rawLine.trim();
+    // Detecta início de disciplina: "CÓDIGO - NOME" (código com letras+digitos, opcional ponto)
+    // Evita confundir com linhas de cabeçalho como "COORDENAÇÃO ..."
+    const matchDisciplina = linha.match(/^([A-Z]{3,}[A-Z0-9]*\d{1,4}(?:\.\d+)?)\s*-\s+(.+)$/i);
+    if (matchDisciplina) {
+      disciplinaAtual = { codigo: matchDisciplina[1], nome: matchDisciplina[2] };
+      aguardandoCabecalho = true;
+      continue;
+    }
+    // Cabeçalho da tabela
+    if (aguardandoCabecalho && /Ano-Per\./.test(linha) && /Reservas \(Cap\./.test(linha)) {
+      aguardandoCabecalho = false;
+      continue;
+    }
+    if (!disciplinaAtual || aguardandoCabecalho) continue;
+
+    // 1) Tentativa com regex livre (com espaços/tabs)
+    // Captura: periodo, turma, docente, horarios(códigos tipo 35N12 ...), matriculados, capacidade
+    // Não depende do literal "alunos" e tolera colunas intermediárias (Local, datas, etc.)
+    // Docente: captura nome completo antes de "(XXh)"; depois vem status (ABERTA, etc.)
+    let m = linha.match(/^(\d{4}\.\d)\s+\S+\s+Turma\s+(\S+)\s+(.+?)\s*\(\d+h\)\s+\S+\s+.*?(\d+[MTN]\d+(?:\s+\d+[MTN]\d+)*)[\s\S]*?(\d+)\/(\d+)\s*alunos?/i);
+    // 2) Se falhar, tenta parsing por tabulação (relatório tabulado)
+    if (!m && rawLine.includes('\t')) {
+      const cols = rawLine.split('\t');
+      if (cols.length >= 8 && /\d{4}\.\d/.test(cols[0]) && /Turma/.test(cols[2])) {
+        const periodoCol = cols[0].trim();
+        const turmaCol = cols[2].trim().replace(/^Turma\s+/i, '');
+        const docenteCol = (cols[3] || '').replace(/\(\d+h\)/, '').trim();
+        const horarioCol = (cols[5] || '').trim();
+        const matCapCol = (cols[7] || '').trim();
+        const capMatch = matCapCol.match(/(\d+)\/(\d+)/);
+        m = [''] as unknown as RegExpMatchArray;
+        (m as any)[1] = periodoCol;
+        (m as any)[2] = turmaCol;
+        (m as any)[3] = docenteCol;
+        (m as any)[4] = capMatch ? capMatch[1] : '0';
+        (m as any)[5] = capMatch ? capMatch[2] : '0';
+        horariosStr = '';
+        const hInline = horarioCol.match(/(\d+[MTN]\d+(?:\s+\d+[MTN]\d+)*)/);
+        if (hInline) horariosStr = hInline[1];
+      }
+    }
+    // 3) Se ainda falhar, tenta split por 2+ espaços (colunas alinhadas por espaços)
+    if (!m && /\d{4}\.\d/.test(linha) && /Turma\s+\S+/.test(linha)) {
+      const cols = linha.split(/\s{2,}/).map(s => s.trim());
+      // Esperado: [Ano-Per., Nível, Código, Docente(s), Situação, Horário (...), Local, Mat./Cap., Reservas]
+      if (cols.length >= 7) {
+        const periodoCol = cols[0];
+        const codigoCol = cols[2]; // "Turma NN"
+        const docenteCol = cols[3] ? cols[3].replace(/\(\d+h\)/, '').trim() : '';
+        const horarioCand = cols[5] || '';
+        const localOuMatCap = cols[6] || '';
+        let matCapCol = localOuMatCap;
+        // Se a 7a coluna não for Mat/Cap, tenta 8a
+        if (!/(\d+)\/(\d+)/.test(matCapCol) && cols[7]) matCapCol = cols[7];
+        const capMatch = matCapCol.match(/(\d+)\/(\d+)/);
+        m = [''] as unknown as RegExpMatchArray;
+        (m as any)[1] = periodoCol;
+        (m as any)[2] = codigoCol.replace(/^Turma\s+/i, '');
+        (m as any)[3] = docenteCol;
+        // Guardar matriculados/capacidade nos índices 5/6 para unificar com regex principal
+        (m as any)[5] = capMatch ? capMatch[1] : '0';
+        (m as any)[6] = capMatch ? capMatch[2] : '0';
+        horariosStr = '';
+        const hInline = horarioCand.match(/(\d+[MTN]\d+(?:\s+\d+[MTN]\d+)*)/);
+        if (hInline) horariosStr = hInline[1];
+      }
+    }
+
+    if (m) {
+      // Quando veio do regex direto
+      if (!horariosStr) {
+        const hMatch = linha.match(/(\d+[MTN]\d+(?:\s+\d+[MTN]\d+)*)\s*\(/);
+        if (hMatch) horariosStr = hMatch[1];
+      }
+      periodo = m[1];
+      turma = m[2];
+      docente = m[3].replace(/\(\d+h\)/, '').trim();
+      // Unifica índices: se regex principal, m[5]/m[6]; se fallback, já reposicionados acima
+      const matStr = (m as any)[5] as string;
+      const capStr = (m as any)[6] as string;
+      matriculados = parseInt(matStr || '0');
+      capacidade = parseInt(capStr || '0');
+      reservas = [];
+      linhaReserva = '';
+
+      // Agregar linhas de reservas (podem quebrar). Para na próxima turma ou próxima disciplina
+      for (let j = i + 1; j < linhas.length; j++) {
+        const lp = linhas[j].trim();
+        // Se alcançou próxima turma, encerra coleta
+        if (/^\d{4}\.\d\s+GRADUAÇÃO\s+Turma/.test(lp)) {
+          break;
+        }
+        // Se alcançou próxima disciplina, encerra coleta
+        if (/^[A-Z]{3,}[A-Z0-9]*\d{1,4}(?:\.\d+)?\s*-\s+/.test(lp)) {
+          break;
+        }
+        // Linhas de reserva: devem conter " - Presencial - " e terminar com "(n)" (com ou sem sufixo de tipo)
+        if ((/\(\d+\)/.test(lp) && /\s-\s*Presencial\s-\s*/i.test(lp))) {
+          linhaReserva += (linhaReserva ? ' ' : '') + lp;
+        }
+      }
+
+      if (linhaReserva) {
+        const blocos = linhaReserva.split(';').map(b => b.trim()).filter(Boolean);
+        for (const bloco of blocos) {
+          let idx = bloco.indexOf(' - Presencial');
+          let modalidade = 'Presencial';
+          if (idx === -1) {
+            idx = bloco.indexOf(' - EAD');
+            modalidade = 'EAD';
+          }
+          if (idx > -1) {
+            const cursoFull = bloco.substring(0, idx).trim();
+            const resto = bloco.substring(idx + (' - ' + modalidade).length).trim();
+            // Remove prefixo '- ' (se existir) após 'Presencial'
+            const afterPres = resto.replace(/^\-\s*/, '');
+            // Captura tipo (N/MT/MTN...) e quantidade no final, com ou sem hífen antes
+            const tipoQtd = afterPres.match(/(?:-\s*)?([A-ZMTN]{1,3})\s*\((\d+)\)\s*;?$/);
+            if (tipoQtd) {
+              const tipo = tipoQtd[1];
+              const quantidade = parseInt(tipoQtd[2]);
+              // Subárea é o que vier antes do sufixo de tipo/qtd
+              let subarea = afterPres
+                .replace(/(?:-\s*)?[A-ZMTN]{1,3}\s*\(\d+\)\s*;?$/, '')
+                .trim();
+              // Base do curso: apenas o nome antes do primeiro ' - '
+              const cursoBase = (cursoFull.split(' - ')[0] || cursoFull).trim();
+              let cursoDisplay = cursoBase;
+              if (subarea) {
+                subarea = subarea.replace(/\s+-\s+/g, ' - ').trim();
+                cursoDisplay = `${cursoBase} - ${subarea}`;
+              }
+              reservas.push({
+                curso: cursoDisplay,
+                modalidade,
+                tipo,
+                quantidade
+              });
+            }
+          }
+        }
+      }
+
+      if (matriculados < capacidade) {
+        resultado.push({
+          codigo: disciplinaAtual.codigo,
+          nome: disciplinaAtual.nome,
+          turma,
+          periodo,
+          docente,
+          horarios: horariosStr,
+          matriculados,
+          capacidade,
+          vagasDisponiveis: capacidade - matriculados,
+          reservas
+        });
+      }
+
+      horariosStr = '';
+      continue;
+    }
+  }
+  return resultado;
+}

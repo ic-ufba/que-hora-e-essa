@@ -18,6 +18,7 @@ import {
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
 import { useToast } from "@/hooks/use-toast";
+import { parseReservasPorCurso, AlocacaoTurma } from "@/utils/sigaaParser";
 
 const PlanejadorSemestral = () => {
   const [inputText, setInputText] = useState("");
@@ -25,6 +26,7 @@ const PlanejadorSemestral = () => {
   const [gradeAtual, setGradeAtual] = useState<Disciplina[]>([]);
   const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [showAlocacaoTutorialModal, setShowAlocacaoTutorialModal] = useState(false);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   // 1. Adicione estados para filtro
@@ -40,7 +42,7 @@ const PlanejadorSemestral = () => {
   const [logicaRestricoesHorario, setLogicaRestricoesHorario] = useState<'OU' | 'E'>('OU');
   
   // Estados para conversão simples
-  const [modoConversao, setModoConversao] = useState<'individual' | 'grade'>('individual');
+  const [modoConversao, setModoConversao] = useState<'individual' | 'grade' | 'alocacao'>('individual');
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [historico, setHistorico] = useState<string[]>([]);
   const [historicoDisciplinas, setHistoricoDisciplinas] = useState<Disciplina[]>([]);
@@ -55,6 +57,16 @@ const PlanejadorSemestral = () => {
   // Estados para histórico de grades salvas
   const [historicoGrades, setHistoricoGrades] = useState<{ [key: string]: Disciplina[] }>({});
   const [showHistoricoGrades, setShowHistoricoGrades] = useState(false);
+
+  const [alocacoes, setAlocacoes] = useState<AlocacaoTurma[]>([]);
+  // Histórico específico da Alocação
+  const [historicoAlocacoesCursos, setHistoricoAlocacoesCursos] = useState<string[]>([]);
+  const [historicoAlocacoesData, setHistoricoAlocacoesData] = useState<{ [key: string]: AlocacaoTurma[] }>({});
+  const [selectedAlocacao, setSelectedAlocacao] = useState<{
+    codigo: string;
+    nome: string;
+    turmas: AlocacaoTurma[];
+  } | null>(null);
 
   const diasSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
   const mapSiglaParaNome = {
@@ -124,6 +136,33 @@ const PlanejadorSemestral = () => {
     if (historicoGradesSalvo) {
       setHistoricoGrades(JSON.parse(historicoGradesSalvo));
     }
+
+    // Carrega histórico da Alocação
+    const histAlocCursos = localStorage.getItem('historicoAlocacoesCursos');
+    if (histAlocCursos) {
+      setHistoricoAlocacoesCursos(JSON.parse(histAlocCursos));
+    }
+    const histAlocData = localStorage.getItem('historicoAlocacoesData');
+    if (histAlocData) {
+      setHistoricoAlocacoesData(JSON.parse(histAlocData));
+    }
+  }, []);
+
+  // Restaura a última alocação feita (se existir)
+  useEffect(() => {
+    try {
+      const ultimaAlocacaoStr = localStorage.getItem('ultimaAlocacao');
+      if (ultimaAlocacaoStr) {
+        const ultimaAlocacao = JSON.parse(ultimaAlocacaoStr);
+        if (Array.isArray(ultimaAlocacao) && ultimaAlocacao.length > 0) {
+          setAlocacoes(ultimaAlocacao);
+          setModoConversao('alocacao');
+          setShowInputSection(false);
+        }
+      }
+    } catch (e) {
+      console.warn('Falha ao restaurar ultimaAlocacao do localStorage', e);
+    }
   }, []);
 
   // Salva a grade no localStorage sempre que ela mudar
@@ -160,6 +199,14 @@ const PlanejadorSemestral = () => {
   useEffect(() => {
     localStorage.setItem('historicoGrades', JSON.stringify(historicoGrades));
   }, [historicoGrades]);
+
+  // Salva histórico da Alocação
+  useEffect(() => {
+    localStorage.setItem('historicoAlocacoesCursos', JSON.stringify(historicoAlocacoesCursos));
+  }, [historicoAlocacoesCursos]);
+  useEffect(() => {
+    localStorage.setItem('historicoAlocacoesData', JSON.stringify(historicoAlocacoesData));
+  }, [historicoAlocacoesData]);
 
   const handleConverter = () => {
     if (!inputText.trim()) {
@@ -643,7 +690,132 @@ const PlanejadorSemestral = () => {
     });
   };
 
+  // Função para conversão de alocação
+  const handleConverterAlocacao = () => {
+    if (!inputText.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, cole o texto do SIGAA antes de converter.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const alocacoesExtraidas = parseReservasPorCurso(inputText).filter(a => (a.vagasDisponiveis || 0) > 0);
+      setAlocacoes(alocacoesExtraidas);
+      // Salva última alocação
+      try {
+        localStorage.setItem('ultimaAlocacao', JSON.stringify(alocacoesExtraidas));
+      } catch (e) {
+        console.warn('Falha ao salvar ultimaAlocacao no localStorage', e);
+      }
+      setShowInputSection(false);
+
+      // Extrai nome do curso a partir de "Ofertadas ao curso: ..."
+      const nomeCursoOfertadas = (() => {
+        const lines = inputText.split('\n');
+        for (const raw of lines) {
+          const line = raw.trim();
+          const m = line.match(/Ofertadas ao curso:\s*(.+)/i);
+          if (m) {
+            const resto = m[1].trim();
+            // pega o que vem antes do '/'
+            const nome = resto.split('/')[0].trim();
+            return nome;
+          }
+        }
+        return '';
+      })();
+      if (nomeCursoOfertadas) {
+        if (!historicoCursos.includes(nomeCursoOfertadas)) {
+          setHistoricoCursos(prev => [nomeCursoOfertadas, ...prev.slice(0, 9)]);
+        }
+        try {
+          localStorage.setItem('ultimaAlocacaoCurso', nomeCursoOfertadas);
+        } catch (e) {
+          console.warn('Falha ao salvar ultimaAlocacaoCurso no localStorage', e);
+        }
+
+        // Atualiza histórico da Alocação
+        setHistoricoAlocacoesCursos(prev => {
+          const novo = [nomeCursoOfertadas, ...prev.filter(n => n !== nomeCursoOfertadas)];
+          return novo.slice(0, 10);
+        });
+        setHistoricoAlocacoesData(prev => ({
+          ...prev,
+          [nomeCursoOfertadas]: alocacoesExtraidas,
+        }));
+      }
+
+      toast({
+        title: "Alocação gerada!",
+        description: `${alocacoesExtraidas.length} turma(s) com vagas disponíveis encontradas.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na conversão",
+        description: "Ocorreu um erro ao processar o texto. Verifique o formato.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Adicionar à grade a partir de uma turma de alocação
+  const handleAdicionarAGradeFromAlocacao = (aloc: AlocacaoTurma) => {
+    const turma: Turma = {
+      codigo: aloc.codigo,
+      nome: aloc.nome,
+      periodo: aloc.periodo,
+      turma: aloc.turma,
+      docente: aloc.docente,
+      vagas: aloc.capacidade,
+      horarios: aloc.horarios || '(Sem informação)',
+      dataInicio: '(Sem informação)',
+      dataFim: '(Sem informação)'
+    };
+    handleAdicionarTurma(turma);
+  };
+
+  // Agrupa alocações por disciplina
+  const alocacoesPorDisciplina = alocacoes.reduce((acc, a) => {
+    const key = a.codigo;
+    if (!acc[key]) {
+      acc[key] = { codigo: a.codigo, nome: a.nome, turmas: [] as AlocacaoTurma[] };
+    }
+    acc[key].turmas.push(a);
+    return acc;
+  }, {} as { [key: string]: { codigo: string; nome: string; turmas: AlocacaoTurma[] } });
+
+  // Adicione uma função para limpar as alocações e reabrir o campo de envio
+  const handleLimparAlocacoes = () => {
+    setAlocacoes([]);
+    setShowInputSection(true);
+    try {
+      localStorage.removeItem('ultimaAlocacao');
+      localStorage.removeItem('ultimaAlocacaoCurso');
+    } catch (e) {
+      console.warn('Falha ao limpar ultimaAlocacao do localStorage', e);
+    }
+  };
+
+  // Histórico da Alocação - ações
+  const handleHistoricoAlocacoesClick = (nomeCurso: string) => {
+    const dados = historicoAlocacoesData[nomeCurso];
+    if (dados && Array.isArray(dados)) {
+      setAlocacoes(dados);
+      setModoConversao('alocacao');
+      setShowInputSection(false);
+    }
+  };
+  const handleLimparHistoricoAlocacoes = () => {
+    setHistoricoAlocacoesCursos([]);
+    setHistoricoAlocacoesData({});
+    localStorage.removeItem('historicoAlocacoesCursos');
+    localStorage.removeItem('historicoAlocacoesData');
+  };
+
   return (
+    <> {/* Adicione um Fragment aqui */}
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 space-y-6">
         {/* Header */}
@@ -680,12 +852,23 @@ const PlanejadorSemestral = () => {
               <span className="hidden sm:inline">Completa</span>
               <span className="sm:hidden">Completa</span>
             </Button>
+              <Button
+                variant={modoConversao === 'alocacao' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setModoConversao('alocacao')}
+                className="flex-1 md:flex-none"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Alocação</span>
+                <span className="sm:hidden">Alocação</span>
+            </Button>
           </div>
         </div>
 
         <div className="space-y-6">
           {/* Input Section */}
           <div className="space-y-6">
+              {modoConversao !== 'alocacao' && (
             <Card>
               <CardHeader 
                 onClick={() => modoConversao === 'grade' && turmasOrganizadas.length > 0 && setShowInputSection(!showInputSection)} 
@@ -729,7 +912,7 @@ const PlanejadorSemestral = () => {
                             </div>
                             <p className="mt-2">
                               <button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">
-                                Como acessar as informações no SIGAA
+                                Como acessar as turmas no SIGAA
                               </button>
                             </p>
                           </div>
@@ -749,7 +932,7 @@ const PlanejadorSemestral = () => {
                         </button>
                         {showInstrucoes && (
                           <div className="text-xs md:text-sm text-blue-700 space-y-1 mt-3">
-                            <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as informações no SIGAA</button>)</p>
+                            <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as turmas no SIGAA</button>)</p>
                             <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
                             <p>3. Cole o conteúdo no campo abaixo</p>
                           </div>
@@ -791,6 +974,405 @@ const PlanejadorSemestral = () => {
               </CardContent>
               )}
             </Card>
+              )}
+
+              {/* Input Section para Alocação */}
+              {modoConversao === 'alocacao' && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader
+                      onClick={() => alocacoes.length > 0 && setShowInputSection(!showInputSection)}
+                      className={`${alocacoes.length > 0 ? 'cursor-pointer' : ''} select-none`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <FileText className="w-7 h-7 text-blue-700" />
+                        <CardTitle className="text-lg md:text-xl font-bold text-blue-900 flex items-center">
+                          Alocação de Turma
+                          {alocacoes.length > 0 && (
+                            <span className="ml-2 text-blue-700 text-2xl">{showInputSection ? '−' : '+'}</span>
+                          )}
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-sm md:text-base text-gray-700">
+                        Cole o relatório do SIGAA e veja as vagas disponíveis e reservas por curso.
+                      </CardDescription>
+                    </CardHeader>
+                    {(showInputSection || alocacoes.length === 0) && (
+                      <CardContent className="space-y-4">
+                        {/* Instruções específicas para alocação */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BookOpen className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-semibold text-blue-800">Instruções</span>
+                          </div>
+                          <div className="text-xs md:text-sm text-blue-700 space-y-1">
+                            <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowAlocacaoTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as alocações no SIGAA</button>)</p>
+                            <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
+                            <p>3. Cole o conteúdo no campo abaixo</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Texto do SIGAA</label>
+                          <Textarea
+                            placeholder="Cole aqui o texto do SIGAA..."
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            rows={6}
+                            className="min-h-[120px]"
+                          />
+                        </div>
+                        <Button onClick={handleConverterAlocacao} className="w-full">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Gerar Alocação
+                        </Button>
+                      </CardContent>
+                    )}
+                  </Card>
+                  {/* Exibição das alocações como cards por disciplina */}
+                  {alocacoes.length > 0 && !showInputSection && (
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle className="w-7 h-7 text-green-700" />
+                            <CardTitle className="text-xl font-bold text-green-900">Alocação de Turma</CardTitle>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={handleLimparAlocacoes}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Limpar
+                          </Button>
+                        </div>
+                        <CardDescription className="text-base text-gray-700">
+                          {Object.keys(alocacoesPorDisciplina).length} disciplina(s) com vagas
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* Campo de busca e filtro */}
+                        <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-3 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Buscar disciplina..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300 md:w-auto"
+                            style={{ minWidth: 0 }}
+                          />
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 border rounded px-3 py-2 text-sm bg-muted hover:bg-muted/70 transition"
+                            onClick={() => setFiltroModalOpen(true)}
+                          >
+                            <Filter className="w-4 h-4" />
+                            Filtrar
+                          </button>
+                        </div>
+                        {/* Modal de filtro customizado */}
+                        {filtroModalOpen && (
+                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setFiltroModalOpen(false)}>
+                            <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-lg md:p-6 shadow border" onClick={e => e.stopPropagation()}>
+                              {/* (Conteúdo do modal de filtro igual ao da conversão completa) */}
+                              {/* ...copiar o mesmo modal de filtro... */}
+                              <div className="flex items-center justify-between mb-4 border-b pb-2">
+                                <div className="flex items-center gap-2">
+                                  <Filter className="w-5 h-5 text-blue-600" />
+                                  <h3 className="text-lg font-bold text-gray-900">Filtro de matérias</h3>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setFiltroModalOpen(false)} className="hover:bg-gray-100">
+                                  ✕
+                                </Button>
+                              </div>
+                              <div className="space-y-4">
+                                {/* Dias da semana */}
+                                <div>
+                                  <div className="font-semibold mb-2 text-sm text-gray-900">Dias da semana:</div>
+                                  <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
+                                    {diasSemana.map(dia => (
+                                      <label key={dia} className="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={diasSelecionados.includes(dia)}
+                                          onChange={e => {
+                                            if (e.target.checked) setDiasSelecionados([...diasSelecionados, dia]);
+                                            else setDiasSelecionados(diasSelecionados.filter(d => d !== dia));
+                                          }}
+                                          className="accent-blue-600"
+                                        />
+                                        <span className="text-sm font-medium">{dia}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para dias:</div>
+                                  <div className="space-y-2 md:flex md:gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaFiltroDia === 'OU'}
+                                        onChange={() => setLogicaFiltroDia('OU')}
+                                        className="accent-blue-600"
+                                      />
+                                      <span className="text-sm">OU (um dia ou outro)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaFiltroDia === 'E'}
+                                        onChange={() => setLogicaFiltroDia('E')}
+                                        className="accent-blue-600"
+                                      />
+                                      <span className="text-sm">E (um dia e outro)</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {/* Horários */}
+                                <div>
+                                  <div className="font-semibold mb-2 text-sm text-gray-900">Horários:</div>
+                                  <div className="grid grid-cols-4 md:flex md:flex-wrap gap-1 md:gap-2 max-h-32 overflow-y-auto">
+                                    {horariosGrade.map(horario => (
+                                      <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={horariosSelecionados.includes(horario)}
+                                          onChange={e => {
+                                            if (e.target.checked) setHorariosSelecionados([...horariosSelecionados, horario]);
+                                            else setHorariosSelecionados(horariosSelecionados.filter(h => h !== horario));
+                                          }}
+                                          className="accent-blue-600"
+                                        />
+                                        <span className="font-medium">{horario}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para horários:</div>
+                                  <div className="space-y-2 md:flex md:gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaFiltroHorario === 'OU'}
+                                        onChange={() => setLogicaFiltroHorario('OU')}
+                                        className="accent-blue-600"
+                                      />
+                                      <span className="text-sm">OU (um horário ou outro)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaFiltroHorario === 'E'}
+                                        onChange={() => setLogicaFiltroHorario('E')}
+                                        className="accent-blue-600"
+                                      />
+                                      <span className="text-sm">E (um horário e outro)</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {/* Restrições de Dias */}
+                                <div>
+                                  <div className="font-semibold mb-2 text-sm text-gray-900">Restrições de Dias (dias que NÃO quer):</div>
+                                  <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2">
+                                    {diasSemana.map(dia => (
+                                      <label key={dia} className="flex items-center gap-2 p-2 border rounded bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={diasRestritos.includes(dia)}
+                                          onChange={e => {
+                                            if (e.target.checked) setDiasRestritos([...diasRestritos, dia]);
+                                            else setDiasRestritos(diasRestritos.filter(d => d !== dia));
+                                          }}
+                                          className="accent-red-600"
+                                        />
+                                        <span className="text-sm font-medium">{dia}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para restrições de dias:</div>
+                                  <div className="space-y-2 md:flex md:gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaRestricoes === 'OU'}
+                                        onChange={() => setLogicaRestricoes('OU')}
+                                        className="accent-red-600"
+                                      />
+                                      <span className="text-sm">OU (um dia restrito ou outro)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaRestricoes === 'E'}
+                                        onChange={() => setLogicaRestricoes('E')}
+                                        className="accent-red-600"
+                                      />
+                                      <span className="text-sm">E (um dia restrito e outro)</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {/* Restrições de Horário */}
+                                <div>
+                                  <div className="font-semibold mb-2 text-sm text-gray-900">Restrições de Horário (horários que NÃO quer):</div>
+                                  <div className="grid grid-cols-4 md:flex md:flex-wrap gap-1 md:gap-2 max-h-32 overflow-y-auto">
+                                    {horariosGrade.map(horario => (
+                                      <label key={horario} className="flex items-center gap-1 p-1 md:p-2 border rounded text-xs md:text-sm bg-white hover:bg-blue-50 transition-colors cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={horariosRestritos.includes(horario)}
+                                          onChange={e => {
+                                            if (e.target.checked) setHorariosRestritos([...horariosRestritos, horario]);
+                                            else setHorariosRestritos(horariosRestritos.filter(h => h !== horario));
+                                          }}
+                                          className="accent-red-600"
+                                        />
+                                        <span className="font-medium">{horario}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="font-semibold mt-3 mb-2 text-sm text-gray-900">Lógica para restrições de horário:</div>
+                                  <div className="space-y-2 md:flex md:gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaRestricoesHorario === 'OU'}
+                                        onChange={() => setLogicaRestricoesHorario('OU')}
+                                        className="accent-red-600"
+                                      />
+                                      <span className="text-sm">OU (um horário restrito ou outro)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        checked={logicaRestricoesHorario === 'E'}
+                                        onChange={() => setLogicaRestricoesHorario('E')}
+                                        className="accent-red-600"
+                                      />
+                                      <span className="text-sm">E (um horário restrito e outro)</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                <div className="flex gap-3 pt-4 border-t">
+                                  <button
+                                    type="button"
+                                    className="flex-1 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm font-medium transition-colors"
+                                    onClick={limparFiltro}
+                                  >
+                                    Limpar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                                    onClick={aplicarFiltro}
+                                  >
+                                    Aplicar
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Grade de cards filtrada */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                          {Object.values(alocacoesPorDisciplina)
+                            .filter(disciplina =>
+                              (disciplina.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                               disciplina.codigo.toLowerCase().includes(searchTerm.toLowerCase())) &&
+                              (
+                                (diasSelecionados.length === 0 && horariosSelecionados.length === 0 && diasRestritos.length === 0 && horariosRestritos.length === 0) ||
+                                disciplina.turmas.some(turma => {
+                                  const horarios = parseHorarios(turma.horarios);
+                                  let diasOk = true;
+                                  if (diasSelecionados.length > 0) {
+                                    if (logicaFiltroDia === 'OU') {
+                                      diasOk = horarios.some(h => diasSelecionados.includes(Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia)));
+                                    } else {
+                                      diasOk = diasSelecionados.every(diaSel => horarios.some(h => h.dia === mapSiglaParaNome[diaSel]));
+                                    }
+                                  }
+                                  let horariosOk = true;
+                                  if (horariosSelecionados.length > 0) {
+                                    if (logicaFiltroHorario === 'OU') {
+                                      horariosOk = horarios.some(h => horariosSelecionados.includes(h.horarioInicio));
+                                    } else {
+                                      horariosOk = horariosSelecionados.every(hSel => horarios.some(h => h.horarioInicio === hSel));
+                                    }
+                                  }
+                                  let restricoesDiasOk = true;
+                                  if (diasRestritos.length > 0) {
+                                    const diasTurma = horarios.map(h => Object.keys(mapSiglaParaNome).find(sigla => mapSiglaParaNome[sigla] === h.dia));
+                                    if (logicaRestricoes === 'OU') {
+                                      restricoesDiasOk = !diasRestritos.some(diaRestrito => diasTurma.includes(diaRestrito));
+                                    } else {
+                                      restricoesDiasOk = !diasRestritos.every(diaRestrito => diasTurma.includes(diaRestrito));
+                                    }
+                                  }
+                                  let restricoesHorariosOk = true;
+                                  if (horariosRestritos.length > 0) {
+                                    const horariosTurma = horarios.map(h => h.horarioInicio);
+                                    if (logicaRestricoesHorario === 'OU') {
+                                      restricoesHorariosOk = !horariosRestritos.some(horarioRestrito => horariosTurma.includes(horarioRestrito));
+                                    } else {
+                                      restricoesHorariosOk = !horariosRestritos.every(horarioRestrito => horariosTurma.includes(horarioRestrito));
+                                    }
+                                  }
+                                  return diasOk && horariosOk && restricoesDiasOk && restricoesHorariosOk;
+                                })
+                              )
+                            )
+                            .map((disc, idx) => {
+                              const totalVagas = disc.turmas.reduce((sum, t) => sum + t.vagasDisponiveis, 0);
+                              const nome = disc.nome;
+                              return (
+                                <div
+                                  key={idx}
+                                  className="p-3 md:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => setSelectedAlocacao(disc)}
+                                >
+                                  <div className="font-semibold text-sm md:text-base mb-1">{disc.codigo}</div>
+                                  <div className="text-xs md:text-sm text-muted-foreground mb-2 line-clamp-2">{nome}</div>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="text-xs">{disc.turmas.length} turma(s)</Badge>
+                                    <Badge variant="outline" className="text-xs">{totalVagas} vaga(s) restante(s)</Badge>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Histórico de Cursos Consultados (Alocação) */}
+                  {historicoAlocacoesCursos.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                          <History className="w-7 h-7 text-gray-700" />
+                          <CardTitle className="text-xl font-bold text-gray-900">Histórico de Cursos Consultados</CardTitle>
+                        </div>
+                        <CardDescription className="text-base text-gray-700">
+                          Clique em um curso para reabrir a última alocação
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {historicoAlocacoesCursos.map((nomeCurso, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleHistoricoAlocacoesClick(nomeCurso)}
+                              className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm hover:bg-indigo-200 transition-colors"
+                            >
+                              {nomeCurso}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-end mt-4">
+                          <Button variant="outline" size="sm" onClick={handleLimparHistoricoAlocacoes}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Limpar Histórico
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
 
             {/* Seção de Conversão Individual */}
             {modoConversao === 'individual' && (
@@ -919,7 +1501,7 @@ const PlanejadorSemestral = () => {
                     </span>
                     <Button variant="outline" size="sm" onClick={handleLimparTurmas}>
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Limpar Turmas
+                      Limpar
                     </Button>
                   </div>
                   {/* Campo de busca */}
@@ -1255,6 +1837,7 @@ const PlanejadorSemestral = () => {
                   </CardContent>
                 </Card>
               )}
+            </div>
                           </div>
                           
           {/* Grade Section */}
@@ -1299,6 +1882,7 @@ const PlanejadorSemestral = () => {
               />
             )}
           </div>
+          </div>
         </div>
 
         {/* Dialog de Detalhes da Turma */}
@@ -1310,13 +1894,10 @@ const PlanejadorSemestral = () => {
                   <h3 className="text-xl font-bold">{selectedTurma.codigo}</h3>
                   <p className="text-muted-foreground">{selectedTurma.nome}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedTurma(null)}>
-                  ✕
-                </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedTurma(null)}>✕</Button>
                                         </div>
               
               <div className="space-y-6">
-                {/* Lista todas as turmas da disciplina */}
                 {turmasPorDisciplina[selectedTurma.codigo]?.turmas.map((turma, index) => (
                   <div key={index} className="border rounded-lg p-4 md:p-6 bg-muted/30">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
@@ -1336,6 +1917,7 @@ const PlanejadorSemestral = () => {
                         Adicionar
                                       </Button>
                                     </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div className="space-y-2">
                         <div>
@@ -1351,7 +1933,6 @@ const PlanejadorSemestral = () => {
                                       <div>
                           <span className="font-semibold text-muted-foreground">Horários:</span>
                           <p className="mt-1">{turma.horarios}</p>
-                          {/* Horários convertidos */}
                           <div className="mt-1 flex flex-wrap gap-1">
                             {parseHorarios(turma.horarios).length > 0 ? (
                               parseHorarios(turma.horarios).map((h, idx) => (
@@ -1372,7 +1953,95 @@ const PlanejadorSemestral = () => {
                 </div>
               </div>
             )}
+
+      {/* Modal de Detalhes da Alocação por Disciplina */}
+      {selectedAlocacao && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedAlocacao(null)}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-2xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold">{selectedAlocacao.codigo}</h3>
+                <p className="text-muted-foreground">{selectedAlocacao.nome}</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedAlocacao(null)}>✕</Button>
           </div>
+
+            <div className="space-y-6">
+              {selectedAlocacao.turmas.map((t, idx) => (
+                <div key={idx} className="border rounded-lg p-4 md:p-6 bg-muted/30">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                    <div className="flex gap-2 flex-wrap items-center">
+                      <span className="text-sm md:text-base font-medium">Turma {t.turma} (
+                        <span className="font-normal">{t.vagasDisponiveis} vaga(s) restante(s)</span>
+                      )</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="mt-2 md:mt-0 px-4 py-2 text-xs md:text-sm flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow"
+                      onClick={() => handleAdicionarAGradeFromAlocacao(t)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Adicionar
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-semibold text-muted-foreground">Docente:</span>
+                        <p className="mt-1">{t.docente}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-muted-foreground">Período:</span>
+                        <p className="mt-1">{t.periodo}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-semibold text-muted-foreground">Horários:</span>
+                        <p className="mt-1">{t.horarios || '(Sem informação)'}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {parseHorarios(t.horarios).length > 0 ? (
+                            parseHorarios(t.horarios).map((h, idx2) => (
+                              <span key={idx2} className="inline-block bg-blue-100 text-blue-800 rounded px-2 py-0.5 text-xs font-mono">
+                                {h.dia} {h.horarioInicio} - {h.horarioFim}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded">Horário não informado</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t">
+                    <span className="font-semibold text-muted-foreground">Reservado para:</span>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      O número de vagas exibido abaixo refere-se à reserva inicial para cada curso. Para saber o saldo real de vagas para um curso específico, consulte o "Processamento da Matrícula" da matéria desejada.
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {t.reservas.length === 0 ? (
+                        <span className="text-sm text-gray-500">Nenhuma reserva encontrada</span>
+                      ) : (
+                        t.reservas.map((res, i) => {
+                          const nomeCurso = res.curso; // já inclui subáreas quando houver
+                          return (
+                            <div key={i} className="flex items-center border rounded px-3 py-2 bg-white">
+                              <div className="text-sm">
+                                <div className="font-medium">{nomeCurso} ({res.quantidade} vagas)</div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de histórico de grades */}
       {showHistoricoGrades && (
@@ -1536,7 +2205,7 @@ const PlanejadorSemestral = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
