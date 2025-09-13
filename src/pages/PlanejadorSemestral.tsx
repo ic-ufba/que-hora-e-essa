@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Calculator,
   History,
+  Users,
 } from "lucide-react";
 import { parseSigaaText, turmaToDisciplina, Turma, parseHorarios, Disciplina } from "@/utils/sigaaParser";
 import { GradeHoraria } from "@/components/GradeHoraria";
@@ -48,6 +49,7 @@ const PlanejadorSemestral = () => {
   const [historicoDisciplinas, setHistoricoDisciplinas] = useState<Disciplina[]>([]);
   const [showFormatoEsperado, setShowFormatoEsperado] = useState(false);
   const [showInstrucoes, setShowInstrucoes] = useState(false);
+  const [showInstrucoesAlocacao, setShowInstrucoesAlocacao] = useState(false);
   const [showInputSection, setShowInputSection] = useState(true);
   
   // Estados para histórico de cursos consultados
@@ -858,7 +860,7 @@ const PlanejadorSemestral = () => {
                 onClick={() => setModoConversao('alocacao')}
                 className="flex-1 md:flex-none"
               >
-                <Calendar className="w-4 h-4 mr-2" />
+                <Users className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Alocação</span>
                 <span className="sm:hidden">Alocação</span>
             </Button>
@@ -1001,15 +1003,22 @@ const PlanejadorSemestral = () => {
                       <CardContent className="space-y-4">
                         {/* Instruções específicas para alocação */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <BookOpen className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-semibold text-blue-800">Instruções</span>
-                          </div>
-                          <div className="text-xs md:text-sm text-blue-700 space-y-1">
-                            <p>1. Acesse a página de turmas no SIGAA (<button onClick={() => setShowAlocacaoTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as alocações no SIGAA</button>)</p>
-                            <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
-                            <p>3. Cole o conteúdo no campo abaixo</p>
-                          </div>
+                          <button
+                            onClick={() => setShowInstrucoesAlocacao(!showInstrucoesAlocacao)}
+                            className="flex items-center justify-between w-full text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-blue-800 text-sm md:text-base">Instruções</h4>
+                            </div>
+                            <span className="text-blue-600">{showInstrucoesAlocacao ? '−' : '+'}</span>
+                          </button>
+                          {showInstrucoesAlocacao && (
+                            <div className="text-xs md:text-sm text-blue-700 space-y-1 mt-3">
+                              <p>1. Acesse a página de consultar turma no SIGAA (<button onClick={() => setShowAlocacaoTutorialModal(true)} className="text-blue-600 underline hover:text-blue-800">Como acessar as alocações no SIGAA</button>)</p>
+                              <p>2. Pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+A</kbd> para selecionar todo o conteúdo e pressione <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+C</kbd> para copiar (se tiver no Desktop) / Pressione em um texto da tela e pressione em <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Selecionar tudo</kbd> (se tiver no Mobile)</p>
+                              <p>3. Cole o conteúdo no campo abaixo</p>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="space-y-2">
@@ -1023,7 +1032,7 @@ const PlanejadorSemestral = () => {
                           />
                         </div>
                         <Button onClick={handleConverterAlocacao} className="w-full">
-                          <Calendar className="w-4 h-4 mr-2" />
+                          <Users className="w-4 h-4 mr-2" />
                           Gerar Alocação
                         </Button>
                       </CardContent>
@@ -2118,7 +2127,7 @@ const PlanejadorSemestral = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                <h3 className="text-lg font-bold">Como coletar dados no SIGAA</h3>
+                <h3 className="text-lg font-bold">Como coletar turmas no SIGAA</h3>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowTutorialModal(false)}>
                 ✕
@@ -2198,6 +2207,78 @@ const PlanejadorSemestral = () => {
                     <div className="font-semibold">MATA01 - GEOMETRIA ANALÍTICA</div>
                     <div>Período/ Ano	Turma	Docente	Vgs Reservadas	Horários</div>
                     <div>2025.2	03	JAIME LEONARDO ORJUELA CHAMORRO	5	24T34 (01/09/2025 - 10/01/2026)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de tutorial para alocação */}
+      {showAlocacaoTutorialModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAlocacaoTutorialModal(false)}>
+          <div className="bg-background rounded-lg p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto md:max-w-3xl md:p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Como acessar as alocações no SiGAA</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowAlocacaoTutorialModal(false)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Siga estes passos para extrair os dados corretamente do sistema da UFBA
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                  <div>
+                    <p className="font-medium text-sm">Acesse o SIGAA</p>
+                    <a href="https://sigaa.ufba.br/sigaa/verTelaLogin.do" target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                      sigaa.ufba.br/sigaa/verTelaLogin.do
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-medium text-sm">Faça o login com seu <strong>Usuário e Senha</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                  <div>
+                    <p className="font-medium text-sm">No menu superior, vá em <strong>Ensino &gt; Turmas &gt; Consultas Gerais &gt; Consultar Turma</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+                  <div>
+                    <p className="font-medium text-sm">No campo <strong>"Ofertadas ao curso"</strong> selecione o curso que deseja</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">5</div>
+                  <div>
+                    <p className="font-medium text-sm">Marque o campo <strong>"Exibir resultado da consulta em formato de relatório agrupado por departamento e incluir reservas"</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">6</div>
+                  <div>
+                    <p className="font-medium text-sm">Clique em <strong>Buscar</strong></p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">7</div>
+                  <div>
+                    <p className="font-medium text-sm">Copie todo o <strong>bloco de informações</strong> da(s) matéria(s)</p>
                   </div>
                 </div>
               </div>

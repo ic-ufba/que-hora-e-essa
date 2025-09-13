@@ -200,7 +200,7 @@ const Home = () => {
             className="px-8 py-3 text-lg w-full sm:w-auto border-blue-600 text-blue-600 hover:bg-blue-50"
           >
             <BookOpen className="w-5 h-5 mr-2" />
-            Como Coletar Dados
+            Como Coletar Turmas
           </Button>
         </div>
         <p className="text-sm text-gray-600 mt-3 text-center">Escolha entre conversão individual ou completa</p>
@@ -208,7 +208,7 @@ const Home = () => {
 
       {/* Funcionalidades principais */}
       <section className="max-w-6xl mx-auto px-4 md:px-0 mb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Conversão Individual */}
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
@@ -282,6 +282,43 @@ const Home = () => {
               <p className="text-xs text-indigo-800">Planejar todo o semestre, visualizar conflitos e organizar sua grade de forma eficiente.</p>
             </div>
           </div>
+
+          {/* Alocação de Turmas */}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="w-8 h-8 text-emerald-600" />
+              <h2 className="text-xl font-bold text-emerald-900">Alocação de Turmas</h2>
+            </div>
+            <p className="text-gray-700 mb-4">Consulte vagas disponíveis e reservas por curso diretamente do SIGAA para planejar sua matrícula.</p>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center gap-2 text-sm text-emerald-800">
+                <CheckCircle className="w-4 h-4" />
+                <span>Vagas totais ofertadas por curso</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-800">
+                <CheckCircle className="w-4 h-4" />
+                <span>Relatório agrupado por departamento</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-800">
+                <CheckCircle className="w-4 h-4" />
+                <span>Melhor embasamento para a Rematrícula</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-800">
+                <CheckCircle className="w-4 h-4" />
+                <span>Detecção de turmas que restaram vagas</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-800">
+                <CheckCircle className="w-4 h-4" />
+                <span>Interface intuitiva</span>
+              </div>
+            </div>
+            
+            <div className="bg-emerald-100 p-3 rounded-lg">
+              <p className="text-sm text-emerald-900 font-medium mb-2">Ideal para:</p>
+              <p className="text-xs text-emerald-800">Verificar vagas disponíveis antes da rematrícula e planejar suas disciplinas com uma base real.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -335,6 +372,11 @@ const Home = () => {
             <Calendar className="w-12 h-12 text-red-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-2">Grade Visual</h3>
             <p className="text-sm text-gray-600">Visualize sua grade semanal em formato de calendário interativo</p>
+          </div>
+          <div className="text-center">
+            <Users className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-2">Alocação de Turmas</h3>
+            <p className="text-sm text-gray-600">Consulte vagas disponíveis e reservas por curso no SIGAA</p>
           </div>
         </div>
       </section>
@@ -393,7 +435,7 @@ const Home = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                <h3 className="text-lg font-bold">Como coletar dados no SIGAA</h3>
+                <h3 className="text-lg font-bold">Como coletar turmas no SIGAA</h3>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowTutorialModal(false)}>
                 ✕

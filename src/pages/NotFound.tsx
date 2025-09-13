@@ -32,7 +32,7 @@ const NotFound = () => {
             <Button variant="outline" asChild>
               <Link to="/planejador">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Conversão Simples
+                Comece seu planejamento
               </Link>
             </Button>
       </div>

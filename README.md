@@ -51,6 +51,14 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 - **Agrupamento de Horários**: Cria um único evento para as aulas de cada matéria no dia
 - **Informações Completas**: Inclui código da disciplina, nome, professor e horários
 
+### 🎯 Alocação de Turmas
+- **Consulta de Vagas**: Visualize vagas disponíveis e reservas por curso no SIGAA
+- **Relatório Agrupado**: Extrai dados organizados por departamento com informações de reservas
+- **Filtro por Curso**: Selecione cursos específicos para consultar alocações
+- **Histórico de Consultas**: Mantém histórico das últimas consultas de alocação por curso
+- **Interface Intuitiva**: Modal com instruções detalhadas para acessar dados no SIGAA
+- **Visualização Organizada**: Dados apresentados em cards por disciplina com informações completas
+
 ### 💾 Persistência e Sincronização
 - **Persistência Automática**: Suas conversões e grade são salvas automaticamente no navegador
 - **Sincronização**: Dados mantidos entre sessões e páginas
@@ -96,7 +104,7 @@ O **QueHoraÉEssa?** facilita a vida do estudante da UFBA ao transformar código
 4. **Acesse no navegador:**
    - http://localhost:5173
 
-### 📖 Como Coletar Dados do SIGAA
+### 📖 Como Coletar Turmas do SIGAA
 
 1. Acesse o [SIGAA UFBA](https://sigaa.ufba.br/sigaa/public/home.jsf)
 2. Navegue até **Graduação > Cursos**
@@ -130,6 +138,28 @@ A **Conversão Rápida** permite converter múltiplos códigos de horário simul
 - **Turnos**: M (Manhã), T (Tarde), N (Noite)
 - **Horários**: 1-6 para M/T, 1-4 para N
 - **Formato inválido**: Badge vermelho e mensagem explicativa
+
+### 🎯 Alocação de Turmas
+
+A **Alocação de Turmas** permite consultar vagas disponíveis e reservas por curso diretamente do SIGAA:
+
+#### Como Usar
+1. Acesse a página **Planejador Semestral**
+2. Selecione a aba **"Alocação"**
+3. Siga as instruções para acessar os dados no SIGAA:
+   - Acesse o SIGAA e faça login
+   - Vá em **Ensino > Turmas > Consultas Gerais > Consultar Turma**
+   - Selecione o curso desejado no campo "Ofertadas ao curso"
+   - Marque "Exibir resultado da consulta em formato de relatório agrupado por departamento e incluir reservas"
+   - Clique em **Buscar**
+4. Copie todo o conteúdo da página e cole no campo de texto
+5. Clique em **"Gerar Alocação"** para visualizar as vagas disponíveis
+
+#### Funcionalidades
+- **Visualização por Disciplina**: Dados organizados em cards por matéria
+- **Informações Completas**: Código, nome, professor, vagas e reservas
+- **Histórico de Consultas**: Mantém as últimas consultas por curso
+- **Interface Responsiva**: Funciona perfeitamente em desktop e mobile
 
 ### 📝 Formato de Entrada Esperado
 
